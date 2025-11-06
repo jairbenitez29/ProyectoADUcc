@@ -43,7 +43,7 @@ st.markdown("""
 
     /* Remove default padding */
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 6rem !important;
         max-width: 100% !important;
     }
 
@@ -142,13 +142,7 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Main Content Spacing */
-    .main-content {
-        margin-top: 100px;
-        padding: 2rem;
-        min-height: calc(100vh - 100px);
-        background: #ffffff;
-    }
+    /* Main Content Spacing - removed custom div */
 
     /* Page Header */
     .page-header {
@@ -378,9 +372,29 @@ st.markdown("""
         border-top-color: #dc2626 !important;
     }
 
-    /* Radio Buttons - Hidden for custom navbar */
-    .stRadio {
-        display: none;
+    /* Tabs styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 1rem;
+        background-color: transparent;
+        border-bottom: 2px solid #e5e5e5;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        padding: 1rem 2rem;
+        font-weight: 600;
+        color: #666;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: #f8f9fa;
+        color: #1a1a1a;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background-color: white;
+        color: #dc2626;
+        border-bottom: 3px solid #dc2626;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -549,8 +563,6 @@ model_type = st.selectbox(
 st.session_state.model_type = model_type
 
 # Selector de página mediante tabs
-st.markdown('<div class="main-content">', unsafe_allow_html=True)
-
 tab1, tab2, tab3 = st.tabs([
     "🔍 Predicción Individual",
     "📊 Predicción por Lotes",
@@ -834,8 +846,6 @@ with tab3:
                 }),
                 use_container_width=True
             )
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
 st.markdown("---")
