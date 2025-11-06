@@ -755,27 +755,26 @@ individual_active = "active" if current_page == "individual" else ""
 lotes_active = "active" if current_page == "lotes" else ""
 metricas_active = "active" if current_page == "metricas" else ""
 
-st.markdown(f"""
-<!-- Overlay oscuro -->
+# Renderizar overlay
+st.markdown("""
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
+""", unsafe_allow_html=True)
 
-<!-- Sidebar Menu -->
+# Renderizar Sidebar
+sidebar_html = f"""
 <div class="sidebar-menu" id="sidebarMenu">
     <div class="sidebar-close" id="sidebarClose">
         <i class="fas fa-times"></i>
     </div>
-
     <div class="sidebar-header">
         <div class="sidebar-title">
             <i class="fas fa-heartbeat sidebar-icon"></i>
             <span>SistemaPredict</span>
         </div>
     </div>
-
     <div class="sidebar-timer" id="sidebarTimer">
         Se cerrará automáticamente en <span id="timerCount">5</span>s
     </div>
-
     <nav class="sidebar-nav">
         <div class="sidebar-nav-item {inicio_active}" data-page="inicio">
             <i class="fas fa-home"></i>
@@ -794,7 +793,6 @@ st.markdown(f"""
             <span>Métricas de Modelos</span>
         </div>
     </nav>
-
     <div style="padding: 0 1.5rem; margin-top: 2rem;">
         <div style="padding: 1rem; background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px;">
             <p style="color: #e0e0e0; font-size: 0.85rem; margin: 0 0 0.5rem 0; font-weight: 600;">Modelo Activo:</p>
@@ -802,8 +800,11 @@ st.markdown(f"""
         </div>
     </div>
 </div>
+"""
+st.markdown(sidebar_html, unsafe_allow_html=True)
 
-<!-- Navbar -->
+# Renderizar Navbar
+navbar_html = """
 <div class="navbar">
     <div class="navbar-container">
         <div class="hamburger-btn" id="hamburgerBtn">
@@ -811,14 +812,17 @@ st.markdown(f"""
             <div class="hamburger-line"></div>
             <div class="hamburger-line"></div>
         </div>
-
         <div class="navbar-brand">
             <div class="brand-logo"><i class="fas fa-heartbeat"></i></div>
             <div class="brand-text">SistemaPredict</div>
         </div>
     </div>
 </div>
+"""
+st.markdown(navbar_html, unsafe_allow_html=True)
 
+# JavaScript para funcionalidad del menú
+st.markdown("""
 <script>
     let autoCloseTimer = null;
     let countdownTimer = null;
@@ -831,84 +835,75 @@ st.markdown(f"""
     const timerDisplay = document.getElementById('timerCount');
     const navItems = document.querySelectorAll('.sidebar-nav-item');
 
-    // Abrir sidebar
-    function openSidebar() {{
+    function openSidebar() {
         sidebar.classList.add('open');
         overlay.classList.add('show');
         startAutoClose();
-    }}
+    }
 
-    // Cerrar sidebar
-    function closeSidebar() {{
+    function closeSidebar() {
         sidebar.classList.remove('open');
         overlay.classList.remove('show');
         clearTimers();
         resetTimer();
-    }}
+    }
 
-    // Auto-cierre después de 5 segundos
-    function startAutoClose() {{
+    function startAutoClose() {
         timeRemaining = 5;
         updateTimerDisplay();
-
-        countdownTimer = setInterval(() => {{
+        countdownTimer = setInterval(() => {
             timeRemaining--;
             updateTimerDisplay();
-
-            if (timeRemaining <= 0) {{
+            if (timeRemaining <= 0) {
                 closeSidebar();
-            }}
-        }}, 1000);
-    }}
+            }
+        }, 1000);
+    }
 
-    function updateTimerDisplay() {{
-        if (timerDisplay) {{
+    function updateTimerDisplay() {
+        if (timerDisplay) {
             timerDisplay.textContent = timeRemaining;
-        }}
-    }}
+        }
+    }
 
-    function clearTimers() {{
+    function clearTimers() {
         if (autoCloseTimer) clearTimeout(autoCloseTimer);
         if (countdownTimer) clearInterval(countdownTimer);
-    }}
+    }
 
-    function resetTimer() {{
+    function resetTimer() {
         timeRemaining = 5;
         updateTimerDisplay();
-    }}
+    }
 
-    // Event listeners
     hamburger.addEventListener('click', openSidebar);
     closeBtn.addEventListener('click', closeSidebar);
     overlay.addEventListener('click', closeSidebar);
 
-    // Conectar items del sidebar con botones de Streamlit
-    const pageMapping = {{
+    const pageMapping = {
         'inicio': 0,
         'individual': 1,
         'lotes': 2,
         'metricas': 3
-    }};
+    };
 
-    navItems.forEach(item => {{
-        item.addEventListener('click', function() {{
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
             const page = this.getAttribute('data-page');
             const index = pageMapping[page];
             const buttons = document.querySelectorAll('button[kind="primary"]');
-
-            if (buttons[index]) {{
+            if (buttons[index]) {
                 buttons[index].click();
                 closeSidebar();
-            }}
-        }});
-    }});
+            }
+        });
+    });
 
-    // Resetear timer cuando el mouse está sobre el sidebar
-    sidebar.addEventListener('mouseenter', () => {{
+    sidebar.addEventListener('mouseenter', () => {
         clearTimers();
         resetTimer();
         startAutoClose();
-    }});
+    });
 </script>
 """, unsafe_allow_html=True)
 
@@ -1123,6 +1118,17 @@ elif st.session_state.current_page == 'individual':
                         step=1.0,
                         key=feature,
                         help="0 = No, 1 = Sí"
+                    )
+                elif 'age' in feature.lower() or 'edad' in feature.lower():
+                    # Límite de edad hasta 80 años
+                    feature_values[feature] = st.number_input(
+                        format_feature_name(feature),
+                        min_value=0.0,
+                        max_value=80.0,
+                        value=0.0,
+                        step=1.0,
+                        key=feature,
+                        help="Edad máxima: 80 años"
                     )
                 else:
                     feature_values[feature] = st.number_input(
