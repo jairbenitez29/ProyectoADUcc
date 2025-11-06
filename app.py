@@ -43,20 +43,28 @@ st.markdown("""
     header {visibility: hidden;}
     .stDeployButton {display: none;}
 
-    /* Hide navigation buttons container */
-    .nav-buttons-hidden {
-        display: none !important;
-        height: 0 !important;
-        overflow: hidden !important;
-        visibility: hidden !important;
+    /* Ocultar botones de navegación completamente */
+    button[kind="primary"] {
         position: absolute !important;
+        left: -10000px !important;
         width: 0 !important;
+        height: 0 !important;
         opacity: 0 !important;
+        pointer-events: all !important; /* Mantener clickeable */
+        visibility: hidden !important;
     }
 
-    .nav-buttons-hidden * {
-        display: none !important;
-        visibility: hidden !important;
+    /* Ocultar el contenedor de los botones de navegación */
+    div[data-testid="stHorizontalBlock"]:first-of-type,
+    div[data-testid="column"]:has(button[key*="nav_btn"]) {
+        position: absolute !important;
+        left: -10000px !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     /* Remove default padding */
@@ -620,7 +628,22 @@ with st.sidebar:
 # Navbar con Menú Integrado
 model_display = "Red Neuronal" if st.session_state.model_type == "neural" else "Regresión Logística"
 
-# Crear el navbar HTML
+# Botones ocultos para manejar la navegación (NO SE VERÁN)
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    if st.button("nav_inicio", key="nav_btn_inicio", type="primary"):
+        st.session_state.current_page = 'inicio'
+with col2:
+    if st.button("nav_individual", key="nav_btn_individual", type="primary"):
+        st.session_state.current_page = 'individual'
+with col3:
+    if st.button("nav_lotes", key="nav_btn_lotes", type="primary"):
+        st.session_state.current_page = 'lotes'
+with col4:
+    if st.button("nav_metricas", key="nav_btn_metricas", type="primary"):
+        st.session_state.current_page = 'metricas'
+
+# Crear el navbar HTML visual
 current_page = st.session_state.current_page
 inicio_active = "active" if current_page == "inicio" else ""
 individual_active = "active" if current_page == "individual" else ""
@@ -635,29 +658,44 @@ st.markdown(f"""
             <div class="brand-text">SistemaPredict</div>
         </div>
         <div class="navbar-menu">
-            <div class="nav-button {inicio_active}" onclick="window.location.search='?page=inicio'">
+            <div class="nav-button {inicio_active}" id="nav-inicio">
                 <i class="fas fa-home nav-icon"></i>Inicio
             </div>
-            <div class="nav-button {individual_active}" onclick="window.location.search='?page=individual'">
+            <div class="nav-button {individual_active}" id="nav-individual">
                 <i class="fas fa-user-md nav-icon"></i>Predicción Individual
             </div>
-            <div class="nav-button {lotes_active}" onclick="window.location.search='?page=lotes'">
+            <div class="nav-button {lotes_active}" id="nav-lotes">
                 <i class="fas fa-database nav-icon"></i>Predicción Lotes
             </div>
-            <div class="nav-button {metricas_active}" onclick="window.location.search='?page=metricas'">
+            <div class="nav-button {metricas_active}" id="nav-metricas">
                 <i class="fas fa-chart-line nav-icon"></i>Métricas
             </div>
         </div>
     </div>
 </div>
-""", unsafe_allow_html=True)
+<script>
+    // Conectar botones del navbar con botones ocultos de Streamlit
+    const navMapping = {{
+        'nav-inicio': 0,
+        'nav-individual': 1,
+        'nav-lotes': 2,
+        'nav-metricas': 3
+    }};
 
-# Detectar cambio de página desde query params
-query_params = st.query_params
-if "page" in query_params:
-    st.session_state.current_page = query_params["page"]
-else:
-    query_params["page"] = st.session_state.current_page
+    Object.keys(navMapping).forEach(navId => {{
+        const navBtn = document.getElementById(navId);
+        if (navBtn) {{
+            navBtn.onclick = function() {{
+                const buttons = document.querySelectorAll('button[kind="primary"]');
+                const index = navMapping[navId];
+                if (buttons[index]) {{
+                    buttons[index].click();
+                }}
+            }};
+        }}
+    }});
+</script>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # PÁGINA: INICIO - DOCUMENTACIÓN
