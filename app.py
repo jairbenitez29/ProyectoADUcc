@@ -20,269 +20,38 @@ st.set_page_config(
     page_title="SistemaPredict - Diagnóstico Médico ML",
     page_icon="⚕️",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
-# Versión: 2.0 - Menú integrado en header
-
-# CSS personalizado para diseño profesional con colores rojo, blanco y negro
+# CSS personalizado para diseño profesional
 st.markdown("""
 <style>
     /* Imports */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
     /* Global Styles */
     * {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Hide Streamlit elements */
+    /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     .stDeployButton {display: none;}
 
-    /* Ocultar botones de navegación completamente */
-    button[kind="primary"] {
-        position: absolute !important;
-        left: -10000px !important;
-        width: 0 !important;
-        height: 0 !important;
-        opacity: 0 !important;
-        pointer-events: all !important; /* Mantener clickeable */
-        visibility: hidden !important;
-    }
-
-    /* Ocultar el contenedor de los botones de navegación */
-    div[data-testid="stHorizontalBlock"]:first-of-type,
-    div[data-testid="column"]:has(button[key*="nav_btn"]) {
-        position: absolute !important;
-        left: -10000px !important;
-        width: 0 !important;
-        height: 0 !important;
-        overflow: hidden !important;
-        opacity: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* Remove default padding */
-    .block-container {
-        padding-top: 7rem !important;
-        max-width: 100% !important;
-    }
-
-    /* Sticky Navbar */
-    .navbar {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        z-index: 9999 !important;
-        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        display: block !important;
-        visibility: visible !important;
-    }
-
-    .navbar-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        display: flex !important;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1rem 2rem;
-    }
-
-    .navbar-brand {
-        display: flex !important;
-        align-items: center;
-        gap: 0.75rem;
-        flex: 1;
-        justify-content: center;
-    }
-
-    .brand-logo {
-        font-size: 1.8rem;
-        color: #dc2626 !important;
-        font-weight: 800;
-    }
-
-    .brand-text {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: white !important;
-        letter-spacing: -0.5px;
-    }
-
-    /* Botón Hamburguesa */
-    .hamburger-btn {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 45px;
-        height: 45px;
-        background: transparent;
-        border: 2px solid rgba(220, 38, 38, 0.5);
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .hamburger-btn:hover {
-        background: rgba(220, 38, 38, 0.1);
-        border-color: #dc2626;
-    }
-
-    .hamburger-line {
-        width: 25px;
-        height: 3px;
-        background: #dc2626;
-        margin: 3px 0;
-        transition: all 0.3s ease;
-        border-radius: 2px;
-    }
-
-    /* Sidebar Menu */
-    .sidebar-menu {
-        position: fixed;
-        top: 0;
-        left: -320px;
-        width: 320px;
-        height: 100vh;
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
-        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        overflow-y: auto;
-        padding: 2rem 0;
     }
 
-    .sidebar-menu.open {
-        left: 0;
-    }
-
-    .sidebar-header {
-        padding: 0 1.5rem 1.5rem 1.5rem;
-        border-bottom: 2px solid rgba(220, 38, 38, 0.3);
-        margin-bottom: 1rem;
-    }
-
-    .sidebar-title {
-        font-size: 1.5rem;
-        font-weight: 700;
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
         color: white;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
     }
 
-    .sidebar-icon {
-        color: #dc2626;
-        font-size: 1.8rem;
-    }
-
-    .sidebar-close {
-        position: absolute;
-        top: 1.5rem;
-        right: 1.5rem;
-        width: 35px;
-        height: 35px;
-        background: rgba(220, 38, 38, 0.1);
-        border: 2px solid rgba(220, 38, 38, 0.3);
-        border-radius: 6px;
-        color: #dc2626;
-        font-size: 1.2rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-
-    .sidebar-close:hover {
-        background: #dc2626;
-        color: white;
-        transform: rotate(90deg);
-    }
-
-    .sidebar-nav {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 1rem;
-    }
-
-    .sidebar-nav-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem 1.5rem;
-        color: #e0e0e0;
-        background: transparent;
-        border: 2px solid transparent;
-        border-radius: 10px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .sidebar-nav-item:hover {
-        background: rgba(220, 38, 38, 0.1);
-        border-color: rgba(220, 38, 38, 0.3);
-        color: white;
-        transform: translateX(5px);
-    }
-
-    .sidebar-nav-item.active {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-        border-color: #dc2626;
-        color: white;
-        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-    }
-
-    .sidebar-nav-item i {
-        font-size: 1.3rem;
-        width: 25px;
-        text-align: center;
-    }
-
-    /* Overlay oscuro cuando el menú está abierto */
-    .sidebar-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-
-    .sidebar-overlay.show {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    /* Timer visual en el sidebar */
-    .sidebar-timer {
-        padding: 0.75rem 1.5rem;
-        margin: 1rem 1.5rem;
-        background: rgba(220, 38, 38, 0.1);
-        border: 1px solid rgba(220, 38, 38, 0.3);
-        border-radius: 8px;
-        color: #e0e0e0;
-        font-size: 0.85rem;
-        text-align: center;
+    /* Main content */
+    .block-container {
+        padding-top: 2rem;
+        max-width: 100%;
     }
 
     /* Page Header */
@@ -732,177 +501,51 @@ if not models or not feature_names:
     st.error("Error: No se pudieron cargar los modelos. Asegúrese de ejecutar train_models.py primero.")
     st.stop()
 
-# Selector de modelo (sin usar el sidebar de Streamlit)
-# Mantener funcionalidad pero sin mostrar el sidebar nativo
+# ==================================
+# SIDEBAR DE NAVEGACIÓN (STREAMLIT NATIVO)
+# ==================================
+with st.sidebar:
+    st.title("🏥 SistemaPredict")
+    st.markdown("### Navegación")
+    st.markdown("---")
 
-# Navbar con Menú Lateral
-model_display = "Red Neuronal" if st.session_state.model_type == "neural" else "Regresión Logística"
+    page = st.radio(
+        "Selecciona una página:",
+        ["Inicio", "Predicción Individual", "Predicción por Lotes", "Métricas de Modelos"],
+        label_visibility="collapsed"
+    )
 
-# Botones ocultos para manejar la navegación (NO SE VERÁN)
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    if st.button("nav_inicio", key="nav_btn_inicio", type="primary"):
-        st.session_state.current_page = 'inicio'
-with col2:
-    if st.button("nav_individual", key="nav_btn_individual", type="primary"):
-        st.session_state.current_page = 'individual'
-with col3:
-    if st.button("nav_lotes", key="nav_btn_lotes", type="primary"):
-        st.session_state.current_page = 'lotes'
-with col4:
-    if st.button("nav_metricas", key="nav_btn_metricas", type="primary"):
-        st.session_state.current_page = 'metricas'
+    st.markdown("---")
+    st.markdown("### Configuración")
 
-# Crear el navbar y sidebar HTML
-current_page = st.session_state.current_page
-inicio_active = "active" if current_page == "inicio" else ""
-individual_active = "active" if current_page == "individual" else ""
-lotes_active = "active" if current_page == "lotes" else ""
-metricas_active = "active" if current_page == "metricas" else ""
+    model_type = st.selectbox(
+        "Modelo de ML",
+        ["neural", "logistic"],
+        index=0 if st.session_state.model_type == "neural" else 1,
+        format_func=lambda x: "Red Neuronal Artificial" if x == "neural" else "Regresión Logística"
+    )
+    st.session_state.model_type = model_type
 
-# Renderizar todo el HTML necesario
-st.markdown(f"""
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
+    if metrics_data:
+        model_metrics = metrics_data.get("logistic_regression" if model_type == "logistic" else "neural_network", {})
+        accuracy = model_metrics.get("accuracy", 0)
+        st.metric("Accuracy", f"{accuracy*100:.1f}%")
 
-<div class="sidebar-menu" id="sidebarMenu">
-    <div class="sidebar-close" id="sidebarClose">
-        <i class="fas fa-times"></i>
-    </div>
-    <div class="sidebar-header">
-        <div class="sidebar-title">
-            <i class="fas fa-heartbeat sidebar-icon"></i>
-            <span>SistemaPredict</span>
-        </div>
-    </div>
-    <div class="sidebar-timer" id="sidebarTimer">
-        Se cerrará automáticamente en <span id="timerCount">5</span>s
-    </div>
-    <nav class="sidebar-nav">
-        <div class="sidebar-nav-item {inicio_active}" data-page="inicio">
-            <i class="fas fa-home"></i>
-            <span>Inicio</span>
-        </div>
-        <div class="sidebar-nav-item {individual_active}" data-page="individual">
-            <i class="fas fa-user-md"></i>
-            <span>Predicción Individual</span>
-        </div>
-        <div class="sidebar-nav-item {lotes_active}" data-page="lotes">
-            <i class="fas fa-database"></i>
-            <span>Predicción por Lotes</span>
-        </div>
-        <div class="sidebar-nav-item {metricas_active}" data-page="metricas">
-            <i class="fas fa-chart-line"></i>
-            <span>Métricas de Modelos</span>
-        </div>
-    </nav>
-    <div style="padding: 0 1.5rem; margin-top: 2rem;">
-        <div style="padding: 1rem; background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px;">
-            <p style="color: #e0e0e0; font-size: 0.85rem; margin: 0 0 0.5rem 0; font-weight: 600;">Modelo Activo:</p>
-            <p style="color: #dc2626; font-size: 1rem; margin: 0; font-weight: 700;">{model_display}</p>
-        </div>
-    </div>
-</div>
+    st.markdown("---")
+    st.info(
+        "**Dataset:** 81 pacientes\n\n"
+        "**Características:** 55 variables\n\n"
+        "**Clases:** 3 diagnósticos"
+    )
 
-<div class="navbar">
-    <div class="navbar-container">
-        <div class="hamburger-btn" id="hamburgerBtn">
-            <div class="hamburger-line"></div>
-            <div class="hamburger-line"></div>
-            <div class="hamburger-line"></div>
-        </div>
-        <div class="navbar-brand">
-            <div class="brand-logo"><i class="fas fa-heartbeat"></i></div>
-            <div class="brand-text">SistemaPredict</div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# JavaScript para funcionalidad del menú
-st.markdown("""
-<script>
-    let autoCloseTimer = null;
-    let countdownTimer = null;
-    let timeRemaining = 5;
-
-    const sidebar = document.getElementById('sidebarMenu');
-    const overlay = document.getElementById('sidebarOverlay');
-    const hamburger = document.getElementById('hamburgerBtn');
-    const closeBtn = document.getElementById('sidebarClose');
-    const timerDisplay = document.getElementById('timerCount');
-    const navItems = document.querySelectorAll('.sidebar-nav-item');
-
-    function openSidebar() {
-        sidebar.classList.add('open');
-        overlay.classList.add('show');
-        startAutoClose();
-    }
-
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('show');
-        clearTimers();
-        resetTimer();
-    }
-
-    function startAutoClose() {
-        timeRemaining = 5;
-        updateTimerDisplay();
-        countdownTimer = setInterval(() => {
-            timeRemaining--;
-            updateTimerDisplay();
-            if (timeRemaining <= 0) {
-                closeSidebar();
-            }
-        }, 1000);
-    }
-
-    function updateTimerDisplay() {
-        if (timerDisplay) {
-            timerDisplay.textContent = timeRemaining;
-        }
-    }
-
-    function clearTimers() {
-        if (autoCloseTimer) clearTimeout(autoCloseTimer);
-        if (countdownTimer) clearInterval(countdownTimer);
-    }
-
-    function resetTimer() {
-        timeRemaining = 5;
-        updateTimerDisplay();
-    }
-
-    hamburger.addEventListener('click', openSidebar);
-    closeBtn.addEventListener('click', closeSidebar);
-    overlay.addEventListener('click', closeSidebar);
-
-    const pageMapping = {
-        'inicio': 0,
-        'individual': 1,
-        'lotes': 2,
-        'metricas': 3
-    };
-
-    navItems.forEach(item => {
-        item.addEventListener('click', function() {
-            const page = this.getAttribute('data-page');
-            const index = pageMapping[page];
-            const buttons = document.querySelectorAll('button[kind="primary"]');
-            if (buttons[index]) {
-                buttons[index].click();
-                closeSidebar();
-            }
-        });
-    });
-
-    sidebar.addEventListener('mouseenter', () => {
-        clearTimers();
-        resetTimer();
-        startAutoClose();
-    });
-</script>
-""", unsafe_allow_html=True)
+# Mapear la selección a current_page
+page_mapping = {
+    "Inicio": "inicio",
+    "Predicción Individual": "individual",
+    "Predicción por Lotes": "lotes",
+    "Métricas de Modelos": "metricas"
+}
+st.session_state.current_page = page_mapping[page]
 
 # ==========================================
 # PÁGINA: INICIO - DOCUMENTACIÓN
