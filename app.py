@@ -23,6 +23,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Versión: 2.0 - Menú integrado en header
+
 # CSS personalizado para diseño profesional con colores rojo, blanco y negro
 st.markdown("""
 <style>
