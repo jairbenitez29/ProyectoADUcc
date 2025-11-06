@@ -75,42 +75,47 @@ st.markdown("""
 
     /* Sticky Navbar */
     .navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 999;
-        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        padding: 0;
-        margin: 0;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 9999 !important;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        visibility: visible !important;
     }
 
     .navbar-container {
         max-width: 1400px;
         margin: 0 auto;
-        display: flex;
+        display: flex !important;
         align-items: center;
         justify-content: space-between;
         padding: 1rem 2rem;
     }
 
     .navbar-brand {
-        display: flex;
+        display: flex !important;
         align-items: center;
         gap: 0.75rem;
+        flex: 1;
+        justify-content: center;
     }
 
     .brand-logo {
         font-size: 1.8rem;
-        color: #dc2626;
+        color: #dc2626 !important;
         font-weight: 800;
     }
 
     .brand-text {
         font-size: 1.5rem;
         font-weight: 700;
-        color: white;
+        color: white !important;
         letter-spacing: -0.5px;
     }
 
@@ -755,13 +760,10 @@ individual_active = "active" if current_page == "individual" else ""
 lotes_active = "active" if current_page == "lotes" else ""
 metricas_active = "active" if current_page == "metricas" else ""
 
-# Renderizar overlay
-st.markdown("""
+# Renderizar todo el HTML necesario
+st.markdown(f"""
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
-""", unsafe_allow_html=True)
 
-# Renderizar Sidebar
-sidebar_html = f"""
 <div class="sidebar-menu" id="sidebarMenu">
     <div class="sidebar-close" id="sidebarClose">
         <i class="fas fa-times"></i>
@@ -800,11 +802,7 @@ sidebar_html = f"""
         </div>
     </div>
 </div>
-"""
-st.markdown(sidebar_html, unsafe_allow_html=True)
 
-# Renderizar Navbar
-navbar_html = """
 <div class="navbar">
     <div class="navbar-container">
         <div class="hamburger-btn" id="hamburgerBtn">
@@ -818,8 +816,7 @@ navbar_html = """
         </div>
     </div>
 </div>
-"""
-st.markdown(navbar_html, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # JavaScript para funcionalidad del menú
 st.markdown("""
