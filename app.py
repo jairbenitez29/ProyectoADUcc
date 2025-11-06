@@ -41,11 +41,29 @@ st.markdown("""
 
     /* Sidebar styling */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
+        background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
     }
 
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
-        color: white;
+        color: #1a1a1a;
+    }
+
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #1a1a1a;
+    }
+
+    [data-testid="stSidebar"] .stRadio label {
+        color: #1a1a1a;
+    }
+
+    [data-testid="stSidebar"] .stSelectbox label {
+        color: #1a1a1a;
+    }
+
+    [data-testid="stSidebar"] hr {
+        border-color: #dc2626;
     }
 
     /* Main content */
