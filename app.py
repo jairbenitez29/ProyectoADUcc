@@ -590,7 +590,7 @@ with st.sidebar:
         "Seleccionar Modelo de ML",
         ["neural", "logistic"],
         index=0 if st.session_state.model_type == "neural" else 1,
-        format_func=lambda x: "🧠 Red Neuronal Artificial" if x == "neural" else "📊 Regresión Logística"
+        format_func=lambda x: "Red Neuronal Artificial" if x == "neural" else "Regresión Logística"
     )
     st.session_state.model_type = model_type
 
@@ -609,23 +609,23 @@ with st.sidebar:
     )
 
 # Navbar con Menú Integrado
-model_display = "🧠 Red Neuronal" if st.session_state.model_type == "neural" else "📊 Regresión Logística"
+model_display = "Red Neuronal" if st.session_state.model_type == "neural" else "Regresión Logística"
 
 # Ocultar botones de navegación con CSS (solo los usamos para la lógica)
 st.markdown('<div class="nav-buttons-hidden">', unsafe_allow_html=True)
 col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 2])
 
 with col1:
-    if st.button("🏠 Inicio", use_container_width=True, key="btn_inicio"):
+    if st.button("Inicio", use_container_width=True, key="btn_inicio"):
         st.session_state.current_page = 'inicio'
 with col2:
-    if st.button("🔍 Predicción Individual", use_container_width=True, key="btn_individual"):
+    if st.button("Predicción Individual", use_container_width=True, key="btn_individual"):
         st.session_state.current_page = 'individual'
 with col3:
-    if st.button("📊 Predicción Lotes", use_container_width=True, key="btn_lotes"):
+    if st.button("Predicción Lotes", use_container_width=True, key="btn_lotes"):
         st.session_state.current_page = 'lotes'
 with col4:
-    if st.button("📈 Métricas", use_container_width=True, key="btn_metricas"):
+    if st.button("Métricas", use_container_width=True, key="btn_metricas"):
         st.session_state.current_page = 'metricas'
 st.markdown('</div>', unsafe_allow_html=True)
 
