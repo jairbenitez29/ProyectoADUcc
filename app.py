@@ -23,7 +23,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS personalizado para diseño profesional
+# CSS personalizado para diseño profesional con colores rojo, blanco y negro
 st.markdown("""
 <style>
     /* Imports */
@@ -43,7 +43,7 @@ st.markdown("""
 
     /* Remove default padding */
     .block-container {
-        padding-top: 6rem !important;
+        padding-top: 7rem !important;
         max-width: 100% !important;
     }
 
@@ -88,61 +88,34 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
 
-    .navbar-menu {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-    }
-
-    .nav-button {
-        padding: 0.75rem 1.5rem;
-        background: transparent;
-        color: #e0e0e0;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 0.95rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .nav-button:hover {
-        background: rgba(220, 38, 38, 0.1);
-        color: #dc2626;
-        transform: translateY(-2px);
-    }
-
-    .nav-button.active {
-        background: #dc2626;
-        color: white;
-        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
-    }
-
-    .nav-icon {
-        font-size: 1.1rem;
-    }
-
     /* Model Selector in Navbar */
-    .model-selector {
+    .model-selector-container {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        gap: 1rem;
     }
 
-    .model-selector-label {
+    .model-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(220, 38, 38, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(220, 38, 38, 0.3);
+    }
+
+    .model-label {
         color: #e0e0e0;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 500;
     }
 
-    /* Main Content Spacing - removed custom div */
+    .model-name {
+        color: #dc2626;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
 
     /* Page Header */
     .page-header {
@@ -162,6 +135,66 @@ st.markdown("""
         font-size: 1.1rem;
         color: #666;
         font-weight: 400;
+    }
+
+    /* Info Section (Homepage) */
+    .info-section {
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(220, 38, 38, 0.25);
+    }
+
+    .info-section h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: white;
+    }
+
+    .info-section p {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    /* Feature Cards */
+    .feature-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        border: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        box-shadow: 0 4px 16px rgba(220, 38, 38, 0.15);
+        border-color: #dc2626;
+        transform: translateY(-3px);
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        color: #dc2626;
+        margin-bottom: 1rem;
+    }
+
+    .feature-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+    }
+
+    .feature-desc {
+        font-size: 0.9rem;
+        color: #666;
+        line-height: 1.5;
     }
 
     /* Cards */
@@ -459,7 +492,7 @@ def plot_probabilities(probabilities, prediction):
             marker_color=colors,
             text=[f'{p*100:.1f}%' for p in probabilities],
             textposition='auto',
-            textfont=dict(size=14, color='white', family='Inter', weight='bold')
+            textfont=dict(size=14, color='#1a1a1a', family='Inter', weight='bold')
         )
     ])
 
@@ -517,9 +550,6 @@ def plot_confusion_matrix(cm, title="Matriz de Confusión"):
     return fig
 
 # Inicializar session state
-if 'page' not in st.session_state:
-    st.session_state.page = 'Predicción Individual'
-
 if 'model_type' not in st.session_state:
     st.session_state.model_type = 'neural'
 
@@ -532,7 +562,35 @@ if not models or not feature_names:
     st.error("Error: No se pudieron cargar los modelos. Asegúrese de ejecutar train_models.py primero.")
     st.stop()
 
+# Selector de modelo en sidebar (para cambiar el modelo)
+with st.sidebar:
+    st.markdown("### <i class='fas fa-cog'></i> Configuración", unsafe_allow_html=True)
+    st.markdown("---")
+
+    model_type = st.selectbox(
+        "Seleccionar Modelo de ML",
+        ["neural", "logistic"],
+        index=0 if st.session_state.model_type == "neural" else 1,
+        format_func=lambda x: "🧠 Red Neuronal Artificial" if x == "neural" else "📊 Regresión Logística"
+    )
+    st.session_state.model_type = model_type
+
+    st.markdown("---")
+
+    if metrics_data:
+        model_metrics = metrics_data.get("logistic_regression" if model_type == "logistic" else "neural_network", {})
+        accuracy = model_metrics.get("accuracy", 0)
+        st.metric("Accuracy", f"{accuracy*100:.1f}%")
+
+    st.markdown("---")
+    st.info(
+        "**Dataset:** 81 pacientes\n\n"
+        "**Características:** 55 variables\n\n"
+        "**Clases:** 3 diagnósticos"
+    )
+
 # Navbar HTML
+model_display = "🧠 Red Neuronal" if st.session_state.model_type == "neural" else "📊 Regresión Logística"
 st.markdown(f"""
 <div class="navbar">
     <div class="navbar-container">
@@ -540,34 +598,198 @@ st.markdown(f"""
             <div class="brand-logo"><i class="fas fa-heartbeat"></i></div>
             <div class="brand-text">SistemaPredict</div>
         </div>
-        <div class="navbar-menu">
-            <div class="model-selector">
-                <span class="model-selector-label">Modelo:</span>
-                <span style="color: white; font-weight: 600;">
-                    {"Red Neuronal" if st.session_state.model_type == "neural" else "Regresión Logística"}
-                </span>
+        <div class="model-selector-container">
+            <div class="model-info">
+                <span class="model-label">Modelo Activo:</span>
+                <span class="model-name">{model_display}</span>
             </div>
         </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Selector de modelo (oculto visualmente pero funcional)
-model_type = st.selectbox(
-    "Modelo",
-    ["neural", "logistic"],
-    index=0 if st.session_state.model_type == "neural" else 1,
-    format_func=lambda x: "Red Neuronal Artificial" if x == "neural" else "Regresión Logística",
-    key="model_selector"
-)
-st.session_state.model_type = model_type
-
-# Selector de página mediante tabs
-tab1, tab2, tab3 = st.tabs([
+# Tabs principales
+tab0, tab1, tab2, tab3 = st.tabs([
+    "🏠 Inicio",
     "🔍 Predicción Individual",
     "📊 Predicción por Lotes",
     "📈 Métricas de Modelos"
 ])
+
+# ==========================================
+# TAB 0: INICIO - DOCUMENTACIÓN
+# ==========================================
+with tab0:
+    # Sección Principal de Información
+    st.markdown("""
+    <div class="info-section">
+        <h3>¿Qué es SistemaPredict?</h3>
+        <p>
+            SistemaPredict es una aplicación web de diagnóstico médico asistido por inteligencia artificial,
+            desarrollada como parte del Proyecto Final de Análisis de Datos 2025. El sistema utiliza algoritmos
+            de Machine Learning para predecir diagnósticos médicos basándose en datos clínicos y de laboratorio
+            de pacientes.
+        </p>
+        <p>
+            El sistema permite a profesionales de la salud realizar predicciones tanto individuales como masivas,
+            proporcionando herramientas de análisis y visualización para la toma de decisiones informadas.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Características Principales
+    st.markdown("## Características Principales")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-user-md"></i></div>
+            <div class="feature-title">Predicción Individual</div>
+            <div class="feature-desc">
+                Diagnóstico personalizado ingresando datos demográficos, síntomas y resultados de laboratorio
+                de un paciente específico.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-database"></i></div>
+            <div class="feature-title">Procesamiento por Lotes</div>
+            <div class="feature-desc">
+                Análisis masivo de múltiples pacientes mediante carga de archivos CSV/Excel con
+                generación automática de reportes.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="feature-title">Métricas Detalladas</div>
+            <div class="feature-desc">
+                Evaluación completa con matrices de confusión, accuracy, precision, recall y F1-score
+                para ambos modelos.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Metodología
+    st.markdown("## Metodología y Tecnología")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("### Modelos de Machine Learning")
+        st.markdown("""
+        **1. Regresión Logística**
+        - Modelo lineal para clasificación multiclase
+        - Interpretable y eficiente computacionalmente
+        - Accuracy: 70.6%
+        - Ideal para análisis rápidos
+
+        **2. Red Neuronal Artificial (MLP)**
+        - Multi-Layer Perceptron con arquitectura de 2 capas ocultas
+        - Capas: 100 y 50 neuronas
+        - Accuracy: 76.5%
+        - Mayor capacidad de aprendizaje de patrones complejos
+        """)
+
+    with col2:
+        st.markdown("### Dataset y Características")
+        st.markdown("""
+        **Datos del Entrenamiento:**
+        - 81 pacientes con diagnósticos confirmados
+        - 55 características por paciente
+        - 3 clases de diagnóstico
+        - División: 80% entrenamiento, 20% prueba
+
+        **Variables Incluidas:**
+        - Datos demográficos (edad, género, ocupación, origen)
+        - Síntomas clínicos (fiebre, dolor, mareos, etc.)
+        - Exámenes de laboratorio (hemograma completo, química sanguínea)
+        - Días de hospitalización
+        """)
+
+    # Cómo Funciona
+    st.markdown("## ¿Cómo Funciona el Sistema?")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        **1. Recopilación de Datos**
+
+        El sistema recibe información del paciente: datos demográficos, síntomas reportados
+        y resultados de exámenes de laboratorio.
+
+        **2. Preprocesamiento**
+
+        Los datos se normalizan utilizando StandardScaler para asegurar que todas las
+        características tengan la misma escala.
+        """)
+
+    with col2:
+        st.markdown("""
+        **3. Predicción**
+
+        El modelo seleccionado (Regresión Logística o Red Neuronal) procesa los datos
+        y genera una predicción con probabilidades.
+
+        **4. Interpretación**
+
+        El sistema presenta el diagnóstico predicho junto con el nivel de confianza
+        y las probabilidades para cada clase.
+        """)
+
+    # Tecnologías Utilizadas
+    st.markdown("## Stack Tecnológico")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        **Frontend & Deployment**
+        - Streamlit (Framework web)
+        - Plotly (Visualizaciones)
+        - HTML/CSS personalizado
+        - Streamlit Cloud (Hosting)
+        """)
+
+    with col2:
+        st.markdown("""
+        **Machine Learning**
+        - Scikit-learn (Modelos)
+        - Pandas (Procesamiento)
+        - NumPy (Cálculos numéricos)
+        - Joblib (Serialización)
+        """)
+
+    with col3:
+        st.markdown("""
+        **Control de Versiones**
+        - Git (Control de versiones)
+        - GitHub (Repositorio)
+        - Python 3.8+ (Lenguaje base)
+        """)
+
+    # Consideraciones
+    st.markdown("## Consideraciones Importantes")
+
+    st.warning("""
+    **Nota Importante:** Este sistema es una herramienta de apoyo diagnóstico y NO reemplaza
+    el criterio médico profesional. Las predicciones deben ser interpretadas por personal
+    de salud calificado y consideradas junto con otros factores clínicos relevantes.
+    """)
+
+    st.info("""
+    **Alcance del Proyecto:** Sistema desarrollado con fines educativos como parte del curso
+    de Análisis de Datos. El modelo fue entrenado con un dataset específico y su aplicación
+    en entornos clínicos reales requeriría validación adicional y aprobación regulatoria.
+    """)
 
 # ==========================================
 # TAB 1: PREDICCIÓN INDIVIDUAL
@@ -615,7 +837,7 @@ with tab1:
                         key=feature
                     )
 
-        submitted = st.form_submit_button("🔮 Realizar Predicción")
+        submitted = st.form_submit_button("Realizar Predicción")
 
         if submitted:
             try:
@@ -669,7 +891,7 @@ with tab2:
     """, unsafe_allow_html=True)
 
     uploaded_file = st.file_uploader(
-        "📁 Seleccione un archivo",
+        "Seleccione un archivo",
         type=['csv', 'xlsx', 'xls'],
         help="Formatos: CSV, XLSX, XLS (máximo 200MB)"
     )
@@ -684,10 +906,10 @@ with tab2:
             st.success(f"✅ Archivo cargado: {uploaded_file.name}")
             st.metric("Total de Registros", len(df))
 
-            with st.expander("👁️ Vista Previa", expanded=True):
+            with st.expander("Vista Previa de Datos", expanded=True):
                 st.dataframe(df.head(10), use_container_width=True)
 
-            if st.button("🚀 Procesar Lote Completo"):
+            if st.button("Procesar Lote Completo"):
                 with st.spinner("Procesando..."):
                     try:
                         missing_cols = set(feature_names) - set(df.columns)
@@ -745,12 +967,12 @@ with tab2:
                             )
 
                         st.markdown("---")
-                        st.markdown("### 📄 Resultados Completos")
+                        st.markdown("### Resultados Completos")
                         st.dataframe(df, use_container_width=True)
 
                         csv = df.to_csv(index=False).encode('utf-8')
                         st.download_button(
-                            label="💾 Descargar Resultados",
+                            label="Descargar Resultados (CSV)",
                             data=csv,
                             file_name="resultados_prediccion.csv",
                             mime="text/csv",
@@ -820,7 +1042,7 @@ with tab3:
         ('logistic_regression', 'Regresión Logística'),
         ('neural_network', 'Red Neuronal Artificial')
     ]:
-        with st.expander(f"📊 {display_name} - Detalles", expanded=True):
+        with st.expander(f"{display_name} - Métricas Detalladas", expanded=True):
             model_data = metrics_data[model_name]
 
             cm = np.array(model_data['confusion_matrix'])
