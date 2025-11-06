@@ -41,6 +41,13 @@ st.markdown("""
     header {visibility: hidden;}
     .stDeployButton {display: none;}
 
+    /* Hide navigation buttons container */
+    .nav-buttons-hidden {
+        display: none !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+
     /* Remove default padding */
     .block-container {
         padding-top: 7rem !important;
@@ -88,33 +95,41 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
 
-    /* Model Selector in Navbar */
-    .model-selector-container {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .model-info {
+    /* Navigation Menu in Navbar */
+    .navbar-menu {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: rgba(220, 38, 38, 0.1);
+    }
+
+    .nav-button {
+        display: inline-block;
+        padding: 0.6rem 1.2rem;
+        color: white;
+        background: transparent;
+        border: 2px solid transparent;
         border-radius: 8px;
-        border: 1px solid rgba(220, 38, 38, 0.3);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
     }
 
-    .model-label {
-        color: #e0e0e0;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-
-    .model-name {
+    .nav-button:hover {
+        background: rgba(220, 38, 38, 0.1);
+        border-color: rgba(220, 38, 38, 0.3);
         color: #dc2626;
-        font-weight: 700;
-        font-size: 0.95rem;
+    }
+
+    .nav-button.active {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: white;
+    }
+
+    .nav-icon {
+        margin-right: 0.4rem;
     }
 
     /* Page Header */
@@ -552,6 +567,8 @@ def plot_confusion_matrix(cm, title="Matriz de Confusión"):
 # Inicializar session state
 if 'model_type' not in st.session_state:
     st.session_state.model_type = 'neural'
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = 'inicio'
 
 # Cargar modelos
 models = load_models()
@@ -589,8 +606,34 @@ with st.sidebar:
         "**Clases:** 3 diagnósticos"
     )
 
-# Navbar HTML
+# Navbar con Menú Integrado
 model_display = "🧠 Red Neuronal" if st.session_state.model_type == "neural" else "📊 Regresión Logística"
+
+# Ocultar botones de navegación con CSS (solo los usamos para la lógica)
+st.markdown('<div class="nav-buttons-hidden">', unsafe_allow_html=True)
+col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 2])
+
+with col1:
+    if st.button("🏠 Inicio", use_container_width=True, key="btn_inicio"):
+        st.session_state.current_page = 'inicio'
+with col2:
+    if st.button("🔍 Predicción Individual", use_container_width=True, key="btn_individual"):
+        st.session_state.current_page = 'individual'
+with col3:
+    if st.button("📊 Predicción Lotes", use_container_width=True, key="btn_lotes"):
+        st.session_state.current_page = 'lotes'
+with col4:
+    if st.button("📈 Métricas", use_container_width=True, key="btn_metricas"):
+        st.session_state.current_page = 'metricas'
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Crear el navbar HTML
+current_page = st.session_state.current_page
+inicio_active = "active" if current_page == "inicio" else ""
+individual_active = "active" if current_page == "individual" else ""
+lotes_active = "active" if current_page == "lotes" else ""
+metricas_active = "active" if current_page == "metricas" else ""
+
 st.markdown(f"""
 <div class="navbar">
     <div class="navbar-container">
@@ -598,28 +641,36 @@ st.markdown(f"""
             <div class="brand-logo"><i class="fas fa-heartbeat"></i></div>
             <div class="brand-text">SistemaPredict</div>
         </div>
-        <div class="model-selector-container">
-            <div class="model-info">
-                <span class="model-label">Modelo Activo:</span>
-                <span class="model-name">{model_display}</span>
+        <div class="navbar-menu">
+            <div class="nav-button {inicio_active}">
+                <i class="fas fa-home nav-icon"></i>Inicio
+            </div>
+            <div class="nav-button {individual_active}">
+                <i class="fas fa-user-md nav-icon"></i>Predicción Individual
+            </div>
+            <div class="nav-button {lotes_active}">
+                <i class="fas fa-database nav-icon"></i>Predicción Lotes
+            </div>
+            <div class="nav-button {metricas_active}">
+                <i class="fas fa-chart-line nav-icon"></i>Métricas
             </div>
         </div>
     </div>
 </div>
+<script>
+document.querySelectorAll('.nav-button').forEach((btn, index) => {{
+    btn.onclick = function() {{
+        const buttons = document.querySelectorAll('[data-testid="stButton"] button');
+        if (buttons[index]) buttons[index].click();
+    }};
+}});
+</script>
 """, unsafe_allow_html=True)
 
-# Tabs principales
-tab0, tab1, tab2, tab3 = st.tabs([
-    "🏠 Inicio",
-    "🔍 Predicción Individual",
-    "📊 Predicción por Lotes",
-    "📈 Métricas de Modelos"
-])
-
 # ==========================================
-# TAB 0: INICIO - DOCUMENTACIÓN
+# PÁGINA: INICIO - DOCUMENTACIÓN
 # ==========================================
-with tab0:
+if st.session_state.current_page == 'inicio':
     # Sección Principal de Información
     st.markdown("""
     <div class="info-section">
@@ -792,9 +843,9 @@ with tab0:
     """)
 
 # ==========================================
-# TAB 1: PREDICCIÓN INDIVIDUAL
+# PÁGINA: PREDICCIÓN INDIVIDUAL
 # ==========================================
-with tab1:
+elif st.session_state.current_page == 'individual':
     st.markdown("""
     <div class="page-header">
         <div class="page-title">Predicción Individual</div>
@@ -874,9 +925,9 @@ with tab1:
                 st.error(f"Error: {e}")
 
 # ==========================================
-# TAB 2: PREDICCIÓN POR LOTES
+# PÁGINA: PREDICCIÓN POR LOTES
 # ==========================================
-with tab2:
+elif st.session_state.current_page == 'lotes':
     st.markdown("""
     <div class="page-header">
         <div class="page-title">Predicción por Lotes</div>
@@ -986,9 +1037,9 @@ with tab2:
             st.error(f"❌ Error al leer archivo: {e}")
 
 # ==========================================
-# TAB 3: MÉTRICAS DE MODELOS
+# PÁGINA: MÉTRICAS DE MODELOS
 # ==========================================
-with tab3:
+elif st.session_state.current_page == 'metricas':
     st.markdown("""
     <div class="page-header">
         <div class="page-title">Métricas de Modelos</div>
