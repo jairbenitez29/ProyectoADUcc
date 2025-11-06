@@ -48,6 +48,15 @@ st.markdown("""
         display: none !important;
         height: 0 !important;
         overflow: hidden !important;
+        visibility: hidden !important;
+        position: absolute !important;
+        width: 0 !important;
+        opacity: 0 !important;
+    }
+
+    .nav-buttons-hidden * {
+        display: none !important;
+        visibility: hidden !important;
     }
 
     /* Remove default padding */
@@ -611,24 +620,6 @@ with st.sidebar:
 # Navbar con Menú Integrado
 model_display = "Red Neuronal" if st.session_state.model_type == "neural" else "Regresión Logística"
 
-# Ocultar botones de navegación con CSS (solo los usamos para la lógica)
-st.markdown('<div class="nav-buttons-hidden">', unsafe_allow_html=True)
-col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 2])
-
-with col1:
-    if st.button("Inicio", use_container_width=True, key="btn_inicio"):
-        st.session_state.current_page = 'inicio'
-with col2:
-    if st.button("Predicción Individual", use_container_width=True, key="btn_individual"):
-        st.session_state.current_page = 'individual'
-with col3:
-    if st.button("Predicción Lotes", use_container_width=True, key="btn_lotes"):
-        st.session_state.current_page = 'lotes'
-with col4:
-    if st.button("Métricas", use_container_width=True, key="btn_metricas"):
-        st.session_state.current_page = 'metricas'
-st.markdown('</div>', unsafe_allow_html=True)
-
 # Crear el navbar HTML
 current_page = st.session_state.current_page
 inicio_active = "active" if current_page == "inicio" else ""
@@ -644,30 +635,29 @@ st.markdown(f"""
             <div class="brand-text">SistemaPredict</div>
         </div>
         <div class="navbar-menu">
-            <div class="nav-button {inicio_active}">
+            <div class="nav-button {inicio_active}" onclick="window.location.search='?page=inicio'">
                 <i class="fas fa-home nav-icon"></i>Inicio
             </div>
-            <div class="nav-button {individual_active}">
+            <div class="nav-button {individual_active}" onclick="window.location.search='?page=individual'">
                 <i class="fas fa-user-md nav-icon"></i>Predicción Individual
             </div>
-            <div class="nav-button {lotes_active}">
+            <div class="nav-button {lotes_active}" onclick="window.location.search='?page=lotes'">
                 <i class="fas fa-database nav-icon"></i>Predicción Lotes
             </div>
-            <div class="nav-button {metricas_active}">
+            <div class="nav-button {metricas_active}" onclick="window.location.search='?page=metricas'">
                 <i class="fas fa-chart-line nav-icon"></i>Métricas
             </div>
         </div>
     </div>
 </div>
-<script>
-document.querySelectorAll('.nav-button').forEach((btn, index) => {{
-    btn.onclick = function() {{
-        const buttons = document.querySelectorAll('[data-testid="stButton"] button');
-        if (buttons[index]) buttons[index].click();
-    }};
-}});
-</script>
 """, unsafe_allow_html=True)
+
+# Detectar cambio de página desde query params
+query_params = st.query_params
+if "page" in query_params:
+    st.session_state.current_page = query_params["page"]
+else:
+    query_params["page"] = st.session_state.current_page
 
 # ==========================================
 # PÁGINA: INICIO - DOCUMENTACIÓN
