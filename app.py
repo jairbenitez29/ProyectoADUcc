@@ -488,7 +488,7 @@ def plot_confusion_matrix(cm, title="Matriz de Confusión"):
         textfont={"size": 16, "family": "Inter", "color": "#1a1a1a"},
         hoverongaps=False,
         showscale=True,
-        colorbar=dict(title="Cantidad", titlefont=dict(color='#1a1a1a'))
+        colorbar=dict(title="Cantidad", title_font=dict(color='#1a1a1a'))
     ))
 
     fig.update_layout(
