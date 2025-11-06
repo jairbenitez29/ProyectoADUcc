@@ -114,41 +114,170 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
 
-    /* Navigation Menu in Navbar */
-    .navbar-menu {
+    /* Botón Hamburguesa */
+    .hamburger-btn {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 45px;
+        height: 45px;
+        background: transparent;
+        border: 2px solid rgba(220, 38, 38, 0.5);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .hamburger-btn:hover {
+        background: rgba(220, 38, 38, 0.1);
+        border-color: #dc2626;
+    }
+
+    .hamburger-line {
+        width: 25px;
+        height: 3px;
+        background: #dc2626;
+        margin: 3px 0;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+    }
+
+    /* Sidebar Menu */
+    .sidebar-menu {
+        position: fixed;
+        top: 0;
+        left: -320px;
+        width: 320px;
+        height: 100vh;
+        background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+        padding: 2rem 0;
+    }
+
+    .sidebar-menu.open {
+        left: 0;
+    }
+
+    .sidebar-header {
+        padding: 0 1.5rem 1.5rem 1.5rem;
+        border-bottom: 2px solid rgba(220, 38, 38, 0.3);
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
     }
 
-    .nav-button {
-        display: inline-block;
-        padding: 0.6rem 1.2rem;
+    .sidebar-icon {
+        color: #dc2626;
+        font-size: 1.8rem;
+    }
+
+    .sidebar-close {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        width: 35px;
+        height: 35px;
+        background: rgba(220, 38, 38, 0.1);
+        border: 2px solid rgba(220, 38, 38, 0.3);
+        border-radius: 6px;
+        color: #dc2626;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-close:hover {
+        background: #dc2626;
         color: white;
+        transform: rotate(90deg);
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+
+    .sidebar-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        color: #e0e0e0;
         background: transparent;
         border: 2px solid transparent;
-        border-radius: 8px;
+        border-radius: 10px;
         text-decoration: none;
         font-weight: 600;
-        font-size: 0.9rem;
-        transition: all 0.3s ease;
+        font-size: 1rem;
         cursor: pointer;
+        transition: all 0.3s ease;
     }
 
-    .nav-button:hover {
+    .sidebar-nav-item:hover {
         background: rgba(220, 38, 38, 0.1);
         border-color: rgba(220, 38, 38, 0.3);
-        color: #dc2626;
+        color: white;
+        transform: translateX(5px);
     }
 
-    .nav-button.active {
-        background: #dc2626;
+    .sidebar-nav-item.active {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
         border-color: #dc2626;
         color: white;
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
     }
 
-    .nav-icon {
-        margin-right: 0.4rem;
+    .sidebar-nav-item i {
+        font-size: 1.3rem;
+        width: 25px;
+        text-align: center;
+    }
+
+    /* Overlay oscuro cuando el menú está abierto */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Timer visual en el sidebar */
+    .sidebar-timer {
+        padding: 0.75rem 1.5rem;
+        margin: 1rem 1.5rem;
+        background: rgba(220, 38, 38, 0.1);
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        border-radius: 8px;
+        color: #e0e0e0;
+        font-size: 0.85rem;
+        text-align: center;
     }
 
     /* Page Header */
@@ -598,34 +727,10 @@ if not models or not feature_names:
     st.error("Error: No se pudieron cargar los modelos. Asegúrese de ejecutar train_models.py primero.")
     st.stop()
 
-# Selector de modelo en sidebar (para cambiar el modelo)
-with st.sidebar:
-    st.markdown("### <i class='fas fa-cog'></i> Configuración", unsafe_allow_html=True)
-    st.markdown("---")
+# Selector de modelo (sin usar el sidebar de Streamlit)
+# Mantener funcionalidad pero sin mostrar el sidebar nativo
 
-    model_type = st.selectbox(
-        "Seleccionar Modelo de ML",
-        ["neural", "logistic"],
-        index=0 if st.session_state.model_type == "neural" else 1,
-        format_func=lambda x: "Red Neuronal Artificial" if x == "neural" else "Regresión Logística"
-    )
-    st.session_state.model_type = model_type
-
-    st.markdown("---")
-
-    if metrics_data:
-        model_metrics = metrics_data.get("logistic_regression" if model_type == "logistic" else "neural_network", {})
-        accuracy = model_metrics.get("accuracy", 0)
-        st.metric("Accuracy", f"{accuracy*100:.1f}%")
-
-    st.markdown("---")
-    st.info(
-        "**Dataset:** 81 pacientes\n\n"
-        "**Características:** 55 variables\n\n"
-        "**Clases:** 3 diagnósticos"
-    )
-
-# Navbar con Menú Integrado
+# Navbar con Menú Lateral
 model_display = "Red Neuronal" if st.session_state.model_type == "neural" else "Regresión Logística"
 
 # Botones ocultos para manejar la navegación (NO SE VERÁN)
@@ -643,7 +748,7 @@ with col4:
     if st.button("nav_metricas", key="nav_btn_metricas", type="primary"):
         st.session_state.current_page = 'metricas'
 
-# Crear el navbar HTML visual
+# Crear el navbar y sidebar HTML
 current_page = st.session_state.current_page
 inicio_active = "active" if current_page == "inicio" else ""
 individual_active = "active" if current_page == "individual" else ""
@@ -651,48 +756,158 @@ lotes_active = "active" if current_page == "lotes" else ""
 metricas_active = "active" if current_page == "metricas" else ""
 
 st.markdown(f"""
+<!-- Overlay oscuro -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar Menu -->
+<div class="sidebar-menu" id="sidebarMenu">
+    <div class="sidebar-close" id="sidebarClose">
+        <i class="fas fa-times"></i>
+    </div>
+
+    <div class="sidebar-header">
+        <div class="sidebar-title">
+            <i class="fas fa-heartbeat sidebar-icon"></i>
+            <span>SistemaPredict</span>
+        </div>
+    </div>
+
+    <div class="sidebar-timer" id="sidebarTimer">
+        Se cerrará automáticamente en <span id="timerCount">5</span>s
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-nav-item {inicio_active}" data-page="inicio">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </div>
+        <div class="sidebar-nav-item {individual_active}" data-page="individual">
+            <i class="fas fa-user-md"></i>
+            <span>Predicción Individual</span>
+        </div>
+        <div class="sidebar-nav-item {lotes_active}" data-page="lotes">
+            <i class="fas fa-database"></i>
+            <span>Predicción por Lotes</span>
+        </div>
+        <div class="sidebar-nav-item {metricas_active}" data-page="metricas">
+            <i class="fas fa-chart-line"></i>
+            <span>Métricas de Modelos</span>
+        </div>
+    </nav>
+
+    <div style="padding: 0 1.5rem; margin-top: 2rem;">
+        <div style="padding: 1rem; background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px;">
+            <p style="color: #e0e0e0; font-size: 0.85rem; margin: 0 0 0.5rem 0; font-weight: 600;">Modelo Activo:</p>
+            <p style="color: #dc2626; font-size: 1rem; margin: 0; font-weight: 700;">{model_display}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Navbar -->
 <div class="navbar">
     <div class="navbar-container">
+        <div class="hamburger-btn" id="hamburgerBtn">
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+        </div>
+
         <div class="navbar-brand">
             <div class="brand-logo"><i class="fas fa-heartbeat"></i></div>
             <div class="brand-text">SistemaPredict</div>
         </div>
-        <div class="navbar-menu">
-            <div class="nav-button {inicio_active}" id="nav-inicio">
-                <i class="fas fa-home nav-icon"></i>Inicio
-            </div>
-            <div class="nav-button {individual_active}" id="nav-individual">
-                <i class="fas fa-user-md nav-icon"></i>Predicción Individual
-            </div>
-            <div class="nav-button {lotes_active}" id="nav-lotes">
-                <i class="fas fa-database nav-icon"></i>Predicción Lotes
-            </div>
-            <div class="nav-button {metricas_active}" id="nav-metricas">
-                <i class="fas fa-chart-line nav-icon"></i>Métricas
-            </div>
-        </div>
     </div>
 </div>
+
 <script>
-    // Conectar botones del navbar con botones ocultos de Streamlit
-    const navMapping = {{
-        'nav-inicio': 0,
-        'nav-individual': 1,
-        'nav-lotes': 2,
-        'nav-metricas': 3
+    let autoCloseTimer = null;
+    let countdownTimer = null;
+    let timeRemaining = 5;
+
+    const sidebar = document.getElementById('sidebarMenu');
+    const overlay = document.getElementById('sidebarOverlay');
+    const hamburger = document.getElementById('hamburgerBtn');
+    const closeBtn = document.getElementById('sidebarClose');
+    const timerDisplay = document.getElementById('timerCount');
+    const navItems = document.querySelectorAll('.sidebar-nav-item');
+
+    // Abrir sidebar
+    function openSidebar() {{
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+        startAutoClose();
+    }}
+
+    // Cerrar sidebar
+    function closeSidebar() {{
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+        clearTimers();
+        resetTimer();
+    }}
+
+    // Auto-cierre después de 5 segundos
+    function startAutoClose() {{
+        timeRemaining = 5;
+        updateTimerDisplay();
+
+        countdownTimer = setInterval(() => {{
+            timeRemaining--;
+            updateTimerDisplay();
+
+            if (timeRemaining <= 0) {{
+                closeSidebar();
+            }}
+        }}, 1000);
+    }}
+
+    function updateTimerDisplay() {{
+        if (timerDisplay) {{
+            timerDisplay.textContent = timeRemaining;
+        }}
+    }}
+
+    function clearTimers() {{
+        if (autoCloseTimer) clearTimeout(autoCloseTimer);
+        if (countdownTimer) clearInterval(countdownTimer);
+    }}
+
+    function resetTimer() {{
+        timeRemaining = 5;
+        updateTimerDisplay();
+    }}
+
+    // Event listeners
+    hamburger.addEventListener('click', openSidebar);
+    closeBtn.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+
+    // Conectar items del sidebar con botones de Streamlit
+    const pageMapping = {{
+        'inicio': 0,
+        'individual': 1,
+        'lotes': 2,
+        'metricas': 3
     }};
 
-    Object.keys(navMapping).forEach(navId => {{
-        const navBtn = document.getElementById(navId);
-        if (navBtn) {{
-            navBtn.onclick = function() {{
-                const buttons = document.querySelectorAll('button[kind="primary"]');
-                const index = navMapping[navId];
-                if (buttons[index]) {{
-                    buttons[index].click();
-                }}
-            }};
-        }}
+    navItems.forEach(item => {{
+        item.addEventListener('click', function() {{
+            const page = this.getAttribute('data-page');
+            const index = pageMapping[page];
+            const buttons = document.querySelectorAll('button[kind="primary"]');
+
+            if (buttons[index]) {{
+                buttons[index].click();
+                closeSidebar();
+            }}
+        }});
+    }});
+
+    // Resetear timer cuando el mouse está sobre el sidebar
+    sidebar.addEventListener('mouseenter', () => {{
+        clearTimers();
+        resetTimer();
+        startAutoClose();
     }});
 </script>
 """, unsafe_allow_html=True)
