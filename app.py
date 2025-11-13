@@ -424,9 +424,9 @@ def load_metrics():
 
 # Mapeo de diagnósticos
 DIAGNOSIS_MAP = {
-    1: "Diagnóstico Tipo 1",
-    2: "Diagnóstico Tipo 2",
-    3: "Diagnóstico Tipo 3"
+    1: "Dengue",
+    2: "Malaria",
+    3: "Leptospirosis"
 }
 
 # Función para formatear nombres de características
@@ -437,7 +437,7 @@ def format_feature_name(name):
 # Función para crear gráfico de probabilidades
 def plot_probabilities(probabilities, prediction):
     """Crear gráfico de barras de probabilidades"""
-    classes = [f"Clase {i+1}" for i in range(len(probabilities))]
+    classes = [DIAGNOSIS_MAP.get(i+1, f"Clase {i+1}") for i in range(len(probabilities))]
     colors = ['#dc2626' if i == prediction-1 else '#e5e5e5' for i in range(len(probabilities))]
 
     fig = go.Figure(data=[
@@ -469,7 +469,7 @@ def plot_probabilities(probabilities, prediction):
 # Función para crear matriz de confusión
 def plot_confusion_matrix(cm, title="Matriz de Confusión"):
     """Crear visualización de matriz de confusión"""
-    labels = [f"Clase {i+1}" for i in range(len(cm))]
+    labels = [DIAGNOSIS_MAP.get(i+1, f"Clase {i+1}") for i in range(len(cm))]
 
     # Crear colorscale personalizada: blanco a rojo
     colorscale = [
@@ -553,7 +553,7 @@ with st.sidebar:
     st.info(
         "**Dataset:** 81 pacientes\n\n"
         "**Características:** 55 variables\n\n"
-        "**Clases:** 3 diagnósticos"
+        "**Enfermedades:** Dengue, Malaria, Leptospirosis"
     )
 
 # Mapear la selección a current_page
@@ -576,12 +576,14 @@ if st.session_state.current_page == 'inicio':
         <p>
             SistemaPredict es una aplicación web de diagnóstico médico asistido por inteligencia artificial,
             desarrollada como parte del Proyecto Final de Análisis de Datos 2025. El sistema utiliza algoritmos
-            de Machine Learning para predecir diagnósticos médicos basándose en datos clínicos y de laboratorio
-            de pacientes.
+            de Machine Learning para identificar y clasificar <strong>tres enfermedades endémicas en Colombia:
+            Dengue, Malaria y Leptospirosis</strong>, basándose en datos clínicos y de laboratorio de pacientes.
         </p>
         <p>
-            El sistema permite a profesionales de la salud realizar predicciones tanto individuales como masivas,
-            proporcionando herramientas de análisis y visualización para la toma de decisiones informadas.
+            Este proyecto utiliza un dataset real de una región endémica de Colombia, permitiendo a profesionales
+            de la salud realizar predicciones tanto individuales como masivas, proporcionando herramientas de
+            análisis y visualización para la toma de decisiones informadas en el diagnóstico diferencial de estas
+            tres enfermedades.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -597,8 +599,8 @@ if st.session_state.current_page == 'inicio':
             <div class="feature-icon"><i class="fas fa-user-md"></i></div>
             <div class="feature-title">Predicción Individual</div>
             <div class="feature-desc">
-                Diagnóstico personalizado ingresando datos demográficos, síntomas y resultados de laboratorio
-                de un paciente específico.
+                Clasificación de Dengue, Malaria o Leptospirosis ingresando datos demográficos,
+                síntomas y resultados de laboratorio de un paciente específico.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -609,8 +611,8 @@ if st.session_state.current_page == 'inicio':
             <div class="feature-icon"><i class="fas fa-database"></i></div>
             <div class="feature-title">Procesamiento por Lotes</div>
             <div class="feature-desc">
-                Análisis masivo de múltiples pacientes mediante carga de archivos CSV/Excel con
-                generación automática de reportes.
+                Análisis masivo de múltiples pacientes para diagnóstico diferencial mediante carga
+                de archivos CSV/Excel con generación automática de reportes.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -621,8 +623,8 @@ if st.session_state.current_page == 'inicio':
             <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
             <div class="feature-title">Métricas Detalladas</div>
             <div class="feature-desc">
-                Evaluación completa con matrices de confusión, accuracy, precision, recall y F1-score
-                para ambos modelos.
+                Evaluación completa del rendimiento para cada enfermedad con matrices de confusión,
+                accuracy, precision, recall y F1-score para ambos modelos.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -652,16 +654,17 @@ if st.session_state.current_page == 'inicio':
         st.markdown("### Dataset y Características")
         st.markdown("""
         **Datos del Entrenamiento:**
+        - Dataset de región endémica en Colombia
         - 81 pacientes con diagnósticos confirmados
-        - 55 características por paciente
-        - 3 clases de diagnóstico
+        - 55 características clínicas y de laboratorio
+        - **3 enfermedades:** Dengue, Malaria y Leptospirosis
         - División: 80% entrenamiento, 20% prueba
 
         **Variables Incluidas:**
         - Datos demográficos (edad, género, ocupación, origen)
-        - Síntomas clínicos (fiebre, dolor, mareos, etc.)
+        - Síntomas clínicos (fiebre, dolor, mareos, ictericia, etc.)
         - Exámenes de laboratorio (hemograma completo, química sanguínea)
-        - Días de hospitalización
+        - Días de hospitalización y temperatura corporal
         """)
 
     # Cómo Funciona
@@ -673,12 +676,12 @@ if st.session_state.current_page == 'inicio':
         **1. Recopilación de Datos**
 
         El sistema recibe información del paciente: datos demográficos, síntomas reportados
-        y resultados de exámenes de laboratorio.
+        y resultados de exámenes de laboratorio relevantes para Dengue, Malaria y Leptospirosis.
 
         **2. Preprocesamiento**
 
         Los datos se normalizan utilizando StandardScaler para asegurar que todas las
-        características tengan la misma escala.
+        características tengan la misma escala y peso en el modelo.
         """)
 
     with col2:
@@ -686,12 +689,12 @@ if st.session_state.current_page == 'inicio':
         **3. Predicción**
 
         El modelo seleccionado (Regresión Logística o Red Neuronal) procesa los datos
-        y genera una predicción con probabilidades.
+        y genera una predicción indicando si es Dengue, Malaria o Leptospirosis.
 
         **4. Interpretación**
 
-        El sistema presenta el diagnóstico predicho junto con el nivel de confianza
-        y las probabilidades para cada clase.
+        El sistema presenta la enfermedad identificada junto con el nivel de confianza
+        y las probabilidades para cada una de las tres enfermedades.
         """)
 
     # Tecnologías Utilizadas
@@ -729,15 +732,17 @@ if st.session_state.current_page == 'inicio':
     st.markdown("## Consideraciones Importantes")
 
     st.warning("""
-    **Nota Importante:** Este sistema es una herramienta de apoyo diagnóstico y NO reemplaza
-    el criterio médico profesional. Las predicciones deben ser interpretadas por personal
-    de salud calificado y consideradas junto con otros factores clínicos relevantes.
+    **Nota Importante:** Este sistema es una herramienta de apoyo para el diagnóstico diferencial
+    de Dengue, Malaria y Leptospirosis y NO reemplaza el criterio médico profesional. Las
+    predicciones deben ser interpretadas por personal de salud calificado y consideradas junto
+    con otros factores clínicos, epidemiológicos y de laboratorio confirmatorio relevantes.
     """)
 
     st.info("""
     **Alcance del Proyecto:** Sistema desarrollado con fines educativos como parte del curso
-    de Análisis de Datos. El modelo fue entrenado con un dataset específico y su aplicación
-    en entornos clínicos reales requeriría validación adicional y aprobación regulatoria.
+    de Análisis de Datos 2025. El modelo fue entrenado con un dataset real de una región endémica
+    en Colombia con 81 casos confirmados de Dengue, Malaria y Leptospirosis. Su aplicación en
+    entornos clínicos reales requeriría validación adicional y aprobación regulatoria.
     """)
 
 # ==========================================
@@ -747,15 +752,53 @@ elif st.session_state.current_page == 'individual':
     st.markdown("""
     <div class="page-header">
         <div class="page-title">Predicción Individual</div>
-        <div class="page-subtitle">Diagnóstico personalizado para un paciente</div>
+        <div class="page-subtitle">Diagnóstico diferencial de Dengue, Malaria y Leptospirosis</div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("""
     <div class="info-box">
-        <p><strong>Instrucciones:</strong> Complete los datos del paciente. Los campos binarios aceptan 0 (No) o 1 (Sí).</p>
+        <p><strong>Instrucciones:</strong> Complete los datos clínicos y de laboratorio del paciente. Los campos binarios aceptan 0 (No) o 1 (Sí). El sistema identificará si el cuadro clínico corresponde a Dengue, Malaria o Leptospirosis.</p>
     </div>
     """, unsafe_allow_html=True)
+
+    # Definir límites razonables basados en rangos clínicos
+    FIELD_LIMITS = {
+        'age': (0.0, 100.0, 1.0, "Edad máxima: 100 años"),
+        'hospitalization_days': (0.0, 365.0, 1.0, "Días de hospitalización"),
+        'body_temperature': (30.0, 45.0, 0.1, "Temperatura corporal en °C"),
+        'hematocrit': (0.0, 60.0, 0.1, "Porcentaje (%)"),
+        'hemoglobin': (0.0, 25.0, 0.1, "g/dL"),
+        'red_blood_cells': (0.0, 10000000.0, 1000.0, "Células/μL"),
+        'white_blood_cells': (0.0, 50000.0, 100.0, "Células/μL"),
+        'neutrophils': (0.0, 100.0, 0.1, "Porcentaje (%)"),
+        'eosinophils': (0.0, 100.0, 0.1, "Porcentaje (%)"),
+        'basophils': (0.0, 10.0, 0.01, "Porcentaje (%)"),
+        'monocytes': (0.0, 100.0, 0.1, "Porcentaje (%)"),
+        'lymphocytes': (0.0, 100.0, 0.1, "Porcentaje (%)"),
+        'platelets': (0.0, 1000000.0, 1000.0, "Células/μL"),
+        'AST (SGOT)': (0.0, 1000.0, 1.0, "U/L"),
+        'ALT (SGPT)': (0.0, 1500.0, 1.0, "U/L"),
+        'ALP (alkaline_phosphatase)': (0.0, 500.0, 1.0, "U/L"),
+        'total_bilirubin': (0.0, 20.0, 0.01, "mg/dL"),
+        'direct_bilirubin': (0.0, 15.0, 0.01, "mg/dL"),
+        'indirect_bilirubin': (0.0, 10.0, 0.01, "mg/dL"),
+        'total_proteins': (0.0, 12.0, 0.1, "g/dL"),
+        'albumin': (0.0, 6.0, 0.01, "g/dL"),
+        'creatinine': (0.0, 15.0, 0.01, "mg/dL"),
+        'urea': (0.0, 300.0, 0.1, "mg/dL")
+    }
+
+    # Lista de campos binarios
+    BINARY_FIELDS = [
+        'male', 'female', 'urban_origin', 'rural_origin', 'homemaker',
+        'student', 'professional', 'merchant', 'agriculture_livestock',
+        'various_jobs', 'unemployed', 'fever', 'headache', 'dizziness',
+        'loss_of_appetite', 'weakness', 'myalgias', 'arthralgias',
+        'eye_pain', 'hemorrhages', 'vomiting', 'abdominal_pain',
+        'chills', 'hemoptysis', 'edema', 'jaundice', 'bruises',
+        'petechiae', 'rash', 'diarrhea', 'respiratory_difficulty', 'itching'
+    ]
 
     # Formulario
     with st.form("prediction_form"):
@@ -767,7 +810,8 @@ elif st.session_state.current_page == 'individual':
         for idx, feature in enumerate(feature_names):
             col = cols[idx % 3]
             with col:
-                if feature in ['male', 'female'] or any(x in feature for x in ['fever', 'headache', 'dizziness', 'weakness', 'vomiting']):
+                # Campos binarios (0 o 1)
+                if feature in BINARY_FIELDS:
                     feature_values[feature] = st.number_input(
                         format_feature_name(feature),
                         min_value=0.0,
@@ -777,20 +821,24 @@ elif st.session_state.current_page == 'individual':
                         key=feature,
                         help="0 = No, 1 = Sí"
                     )
-                elif 'age' in feature.lower() or 'edad' in feature.lower():
-                    # Límite de edad hasta 80 años
+                # Campos con límites específicos
+                elif feature in FIELD_LIMITS:
+                    min_val, max_val, step_val, help_text = FIELD_LIMITS[feature]
                     feature_values[feature] = st.number_input(
                         format_feature_name(feature),
-                        min_value=0.0,
-                        max_value=80.0,
+                        min_value=min_val,
+                        max_value=max_val,
                         value=0.0,
-                        step=1.0,
+                        step=step_val,
                         key=feature,
-                        help="Edad máxima: 80 años"
+                        help=help_text
                     )
+                # Campos numéricos generales
                 else:
                     feature_values[feature] = st.number_input(
                         format_feature_name(feature),
+                        min_value=0.0,
+                        max_value=1000000.0,
                         value=0.0,
                         step=0.01,
                         format="%.2f",
@@ -816,7 +864,7 @@ elif st.session_state.current_page == 'individual':
 
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.metric("Predicción", f"Clase {prediction}")
+                    st.metric("Predicción", DIAGNOSIS_MAP.get(prediction, "Desconocido"))
                 with col2:
                     st.metric("Confianza", f"{confidence*100:.1f}%")
                 with col3:
@@ -825,7 +873,7 @@ elif st.session_state.current_page == 'individual':
                 st.plotly_chart(plot_probabilities(probabilities, prediction), use_container_width=True)
 
                 prob_df = pd.DataFrame({
-                    'Clase': [f'Clase {i+1}' for i in range(len(probabilities))],
+                    'Enfermedad': [DIAGNOSIS_MAP.get(i+1, f'Clase {i+1}') for i in range(len(probabilities))],
                     'Probabilidad': [f'{p*100:.2f}%' for p in probabilities]
                 })
                 st.dataframe(prob_df, use_container_width=True, hide_index=True)
@@ -840,13 +888,13 @@ elif st.session_state.current_page == 'lotes':
     st.markdown("""
     <div class="page-header">
         <div class="page-title">Predicción por Lotes</div>
-        <div class="page-subtitle">Procesamiento masivo de múltiples pacientes</div>
+        <div class="page-subtitle">Clasificación masiva de casos de Dengue, Malaria y Leptospirosis</div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("""
     <div class="info-box">
-        <p><strong>Requisitos:</strong> Archivo CSV o Excel con las mismas 55 columnas del entrenamiento.</p>
+        <p><strong>Requisitos:</strong> Archivo CSV o Excel con las mismas 55 columnas del entrenamiento. El sistema clasificará cada caso como Dengue, Malaria o Leptospirosis.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -912,7 +960,7 @@ elif st.session_state.current_page == 'lotes':
                             st.markdown("### Reporte de Clasificación")
                             report_df = pd.DataFrame(class_report).transpose()
                             report_df = report_df[report_df.index.str.isdigit()]
-                            report_df.index = [f'Clase {i}' for i in report_df.index]
+                            report_df.index = [DIAGNOSIS_MAP.get(int(i), f'Clase {i}') for i in report_df.index]
                             report_df = report_df[['precision', 'recall', 'f1-score', 'support']]
                             report_df.columns = ['Precisión', 'Recall', 'F1-Score', 'Soporte']
 
@@ -952,7 +1000,7 @@ elif st.session_state.current_page == 'metricas':
     st.markdown("""
     <div class="page-header">
         <div class="page-title">Métricas de Modelos</div>
-        <div class="page-subtitle">Comparación y evaluación del rendimiento</div>
+        <div class="page-subtitle">Evaluación del rendimiento en la clasificación de Dengue, Malaria y Leptospirosis</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1015,7 +1063,7 @@ elif st.session_state.current_page == 'metricas':
             report = model_data['classification_report']
             report_df = pd.DataFrame(report).transpose()
             report_df = report_df[report_df.index.str.isdigit()]
-            report_df.index = [f'Clase {i}' for i in report_df.index]
+            report_df.index = [DIAGNOSIS_MAP.get(int(i), f'Clase {i}') for i in report_df.index]
             report_df = report_df[['precision', 'recall', 'f1-score', 'support']]
             report_df.columns = ['Precisión', 'Recall', 'F1-Score', 'Soporte']
 
