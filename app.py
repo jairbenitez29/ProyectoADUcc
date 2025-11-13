@@ -14,6 +14,17 @@ import joblib
 import json
 from pathlib import Path
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+from datetime import datetime
+from io import BytesIO
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Backend para no mostrar ventanas
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
 # Configuración de la página
 st.set_page_config(
@@ -504,6 +515,236 @@ def plot_confusion_matrix(cm, title="Matriz de Confusión"):
 
     return fig
 
+# Función para generar reporte PDF
+def generate_pdf_report(df, predictions, probabilities, model_name, y_true=None):
+    """Genera un reporte PDF completo con los resultados de predicción"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.75*inch, bottomMargin=0.75*inch)
+    story = []
+    styles = getSampleStyleSheet()
+
+    # Estilos personalizados
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#dc2626'),
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=16,
+        textColor=colors.HexColor('#1a1a1a'),
+        spaceAfter=12,
+        spaceBefore=12
+    )
+
+    # Título
+    story.append(Paragraph("Reporte de Predicción - SistemaPredict", title_style))
+    story.append(Paragraph(f"Diagnóstico de Dengue, Malaria y Leptospirosis", styles['Normal']))
+    story.append(Paragraph(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+    story.append(Paragraph(f"Modelo: {model_name}", styles['Normal']))
+    story.append(Spacer(1, 0.3*inch))
+
+    # Métricas generales
+    story.append(Paragraph("Resumen General", heading_style))
+    total_processed = len(predictions)
+    avg_confidence = np.mean([max(p) for p in probabilities]) * 100
+
+    # Contar predicciones por enfermedad
+    unique, counts = np.unique(predictions, return_counts=True)
+    disease_counts = dict(zip(unique, counts))
+
+    summary_data = [
+        ['Métrica', 'Valor'],
+        ['Total de pacientes procesados', str(total_processed)],
+        ['Confianza promedio', f'{avg_confidence:.2f}%'],
+        ['Casos de Dengue predichos', str(disease_counts.get(1, 0))],
+        ['Casos de Malaria predichos', str(disease_counts.get(2, 0))],
+        ['Casos de Leptospirosis predichos', str(disease_counts.get(3, 0))]
+    ]
+
+    if y_true is not None:
+        accuracy = accuracy_score(y_true, predictions) * 100
+        summary_data.append(['Accuracy del modelo', f'{accuracy:.2f}%'])
+
+    summary_table = Table(summary_data, colWidths=[4*inch, 2*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dc2626')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')])
+    ]))
+    story.append(summary_table)
+    story.append(Spacer(1, 0.3*inch))
+
+    # Matriz de confusión (si hay datos reales)
+    if y_true is not None:
+        story.append(Paragraph("Matriz de Confusión", heading_style))
+        cm = confusion_matrix(y_true, predictions)
+
+        # Crear matriz de confusión con matplotlib
+        fig, ax = plt.subplots(figsize=(6, 5))
+        im = ax.imshow(cm, interpolation='nearest', cmap='Reds')
+        ax.figure.colorbar(im, ax=ax)
+
+        # Etiquetas
+        tick_labels = [DIAGNOSIS_MAP.get(i+1, f'Clase {i+1}') for i in range(len(cm))]
+        ax.set(xticks=np.arange(cm.shape[1]),
+               yticks=np.arange(cm.shape[0]),
+               xticklabels=tick_labels,
+               yticklabels=tick_labels,
+               xlabel='Predicción',
+               ylabel='Valor Real')
+
+        # Rotar etiquetas
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+
+        # Agregar texto en las celdas
+        thresh = cm.max() / 2.
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                ax.text(j, i, format(cm[i, j], 'd'),
+                       ha="center", va="center",
+                       color="white" if cm[i, j] > thresh else "black",
+                       fontsize=14, fontweight='bold')
+
+        fig.tight_layout()
+
+        # Guardar figura a buffer
+        img_buffer = BytesIO()
+        plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight')
+        plt.close()
+        img_buffer.seek(0)
+
+        # Agregar imagen al PDF
+        img = Image(img_buffer, width=5*inch, height=4*inch)
+        story.append(img)
+        story.append(Spacer(1, 0.3*inch))
+
+        # Reporte de clasificación
+        story.append(Paragraph("Reporte de Clasificación por Enfermedad", heading_style))
+        class_report = classification_report(y_true, predictions, output_dict=True)
+
+        report_data = [['Enfermedad', 'Precision', 'Recall', 'F1-Score', 'Soporte']]
+        for key in ['1', '2', '3']:
+            if key in class_report:
+                disease_name = DIAGNOSIS_MAP.get(int(key), f'Clase {key}')
+                report_data.append([
+                    disease_name,
+                    f"{class_report[key]['precision']:.2%}",
+                    f"{class_report[key]['recall']:.2%}",
+                    f"{class_report[key]['f1-score']:.2%}",
+                    f"{int(class_report[key]['support'])}"
+                ])
+
+        report_table = Table(report_data, colWidths=[1.5*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1*inch])
+        report_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dc2626')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')])
+        ]))
+        story.append(report_table)
+        story.append(Spacer(1, 0.3*inch))
+
+    # Distribución de predicciones
+    story.append(PageBreak())
+    story.append(Paragraph("Distribución de Predicciones", heading_style))
+
+    # Crear gráfico de barras con matplotlib
+    fig, ax = plt.subplots(figsize=(7, 4))
+    diseases = [DIAGNOSIS_MAP.get(i+1, f'Clase {i+1}') for i in range(3)]
+    counts_list = [disease_counts.get(i+1, 0) for i in range(3)]
+    colors_bars = ['#dc2626', '#991b1b', '#7f1d1d']
+
+    bars = ax.bar(diseases, counts_list, color=colors_bars)
+    ax.set_ylabel('Cantidad de Casos', fontsize=11)
+    ax.set_xlabel('Enfermedad', fontsize=11)
+    ax.set_title('Distribución de Diagnósticos Predichos', fontsize=13, fontweight='bold')
+
+    # Agregar valores en las barras
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{int(height)}',
+               ha='center', va='bottom', fontsize=11, fontweight='bold')
+
+    plt.xticks(rotation=15, ha='right')
+    fig.tight_layout()
+
+    # Guardar figura
+    img_buffer2 = BytesIO()
+    plt.savefig(img_buffer2, format='png', dpi=150, bbox_inches='tight')
+    plt.close()
+    img_buffer2.seek(0)
+
+    img2 = Image(img_buffer2, width=5.5*inch, height=3.5*inch)
+    story.append(img2)
+    story.append(Spacer(1, 0.3*inch))
+
+    # Tabla de resultados (primeros 20)
+    story.append(Paragraph("Muestra de Resultados Detallados (primeros 20 casos)", heading_style))
+
+    # Crear tabla con resultados
+    results_data = [['#', 'Predicción', 'Confianza']]
+    for i in range(min(20, len(predictions))):
+        pred = predictions[i]
+        conf = max(probabilities[i]) * 100
+        disease_name = DIAGNOSIS_MAP.get(pred, f'Clase {pred}')
+        results_data.append([
+            str(i+1),
+            disease_name,
+            f'{conf:.1f}%'
+        ])
+
+    results_table = Table(results_data, colWidths=[0.7*inch, 2.5*inch, 1.5*inch])
+    results_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dc2626')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')])
+    ]))
+    story.append(results_table)
+
+    # Nota final
+    story.append(Spacer(1, 0.4*inch))
+    note = Paragraph(
+        "<b>Nota:</b> Este reporte fue generado automáticamente por SistemaPredict. "
+        "Los resultados deben ser interpretados por personal de salud calificado.",
+        styles['Normal']
+    )
+    story.append(note)
+
+    # Generar PDF
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
 # Inicializar session state
 if 'model_type' not in st.session_state:
     st.session_state.model_type = 'neural'
@@ -978,12 +1219,23 @@ elif st.session_state.current_page == 'lotes':
                         st.markdown("### Resultados Completos")
                         st.dataframe(df, use_container_width=True)
 
-                        csv = df.to_csv(index=False).encode('utf-8')
+                        # Generar reporte PDF
+                        model_name = "Red Neuronal Artificial" if st.session_state.model_type == "neural" else "Regresión Logística"
+                        y_true_pdf = df['diagnosis'].values if 'diagnosis' in df.columns else None
+
+                        pdf_buffer = generate_pdf_report(
+                            df=df,
+                            predictions=predictions,
+                            probabilities=probabilities,
+                            model_name=model_name,
+                            y_true=y_true_pdf
+                        )
+
                         st.download_button(
-                            label="Descargar Resultados (CSV)",
-                            data=csv,
-                            file_name="resultados_prediccion.csv",
-                            mime="text/csv",
+                            label="📄 Descargar Reporte Completo (PDF)",
+                            data=pdf_buffer,
+                            file_name=f"reporte_prediccion_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                            mime="application/pdf",
                             use_container_width=True
                         )
 
