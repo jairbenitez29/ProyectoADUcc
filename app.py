@@ -1291,167 +1291,168 @@ elif st.session_state.current_page == 'individual':
 
         submitted = st.form_submit_button("Realizar Predicción")
 
-        if submitted:
-            try:
-                # Validar campos obligatorios
-                if not patient_name or not patient_id:
-                    st.error("⚠️ Por favor complete los campos obligatorios: Nombre del Paciente y Documento de Identidad")
-                    st.stop()
+    # Procesar resultados FUERA del formulario
+    if submitted:
+        try:
+            # Validar campos obligatorios
+            if not patient_name or not patient_id:
+                st.error("⚠️ Por favor complete los campos obligatorios: Nombre del Paciente y Documento de Identidad")
+                st.stop()
 
-                X = np.array([[feature_values[feat] for feat in feature_names]])
-                X_scaled = models['scaler'].transform(X)
-                model = models[st.session_state.model_type]
+            X = np.array([[feature_values[feat] for feat in feature_names]])
+            X_scaled = models['scaler'].transform(X)
+            model = models[st.session_state.model_type]
 
-                prediction = int(model.predict(X_scaled)[0])
-                probabilities = model.predict_proba(X_scaled)[0]
-                confidence = max(probabilities)
+            prediction = int(model.predict(X_scaled)[0])
+            probabilities = model.predict_proba(X_scaled)[0]
+            confidence = max(probabilities)
 
-                st.markdown("---")
-                st.markdown("## 📋 Resultados del Diagnóstico")
+            st.markdown("---")
+            st.markdown("## 📋 Resultados del Diagnóstico")
 
-                # Mostrar información del paciente
-                st.markdown("### Información del Paciente")
-                patient_info_col1, patient_info_col2, patient_info_col3 = st.columns(3)
+            # Mostrar información del paciente
+            st.markdown("### Información del Paciente")
+            patient_info_col1, patient_info_col2, patient_info_col3 = st.columns(3)
 
-                with patient_info_col1:
-                    st.markdown(f"""
-                    **Nombre:** {patient_name}
-                    **Documento:** {patient_id}
-                    """)
+            with patient_info_col1:
+                st.markdown(f"""
+                **Nombre:** {patient_name}
+                **Documento:** {patient_id}
+                """)
 
-                with patient_info_col2:
-                    st.markdown(f"""
-                    **Fecha de Consulta:** {consultation_date.strftime('%d/%m/%Y')}
-                    **Modelo Usado:** {'Red Neuronal' if st.session_state.model_type == 'neural' else 'Regresión Logística'}
-                    """)
+            with patient_info_col2:
+                st.markdown(f"""
+                **Fecha de Consulta:** {consultation_date.strftime('%d/%m/%Y')}
+                **Modelo Usado:** {'Red Neuronal' if st.session_state.model_type == 'neural' else 'Regresión Logística'}
+                """)
 
-                with patient_info_col3:
-                    st.markdown(f"""
-                    **Edad:** {int(feature_values.get('age', 0))} años
-                    **Género:** {'Masculino' if feature_values.get('male', 0) == 1 else 'Femenino'}
-                    """)
+            with patient_info_col3:
+                st.markdown(f"""
+                **Edad:** {int(feature_values.get('age', 0))} años
+                **Género:** {'Masculino' if feature_values.get('male', 0) == 1 else 'Femenino'}
+                """)
 
-                if patient_notes:
-                    st.markdown(f"**Observaciones:** {patient_notes}")
+            if patient_notes:
+                st.markdown(f"**Observaciones:** {patient_notes}")
 
-                st.markdown("---")
-                st.markdown("### Diagnóstico Predicho")
+            st.markdown("---")
+            st.markdown("### Diagnóstico Predicho")
 
-                diagnosis = DIAGNOSIS_MAP.get(prediction, "Desconocido")
-                st.markdown(f'<div class="success-box">{diagnosis}</div>', unsafe_allow_html=True)
+            diagnosis = DIAGNOSIS_MAP.get(prediction, "Desconocido")
+            st.markdown(f'<div class="success-box">{diagnosis}</div>', unsafe_allow_html=True)
 
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Predicción", DIAGNOSIS_MAP.get(prediction, "Desconocido"))
-                with col2:
-                    st.metric("Confianza", f"{confidence*100:.1f}%")
-                with col3:
-                    st.metric("Modelo", "Red Neuronal" if st.session_state.model_type == "neural" else "R. Logística")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Predicción", DIAGNOSIS_MAP.get(prediction, "Desconocido"))
+            with col2:
+                st.metric("Confianza", f"{confidence*100:.1f}%")
+            with col3:
+                st.metric("Modelo", "Red Neuronal" if st.session_state.model_type == "neural" else "R. Logística")
 
-                st.plotly_chart(plot_probabilities(probabilities, prediction), use_container_width=True)
+            st.plotly_chart(plot_probabilities(probabilities, prediction), use_container_width=True)
 
-                # Crear tabla de probabilidades con mejor formato
-                st.markdown("### Tabla de Probabilidades Detallada")
+            # Crear tabla de probabilidades con mejor formato
+            st.markdown("### Tabla de Probabilidades Detallada")
 
-                prob_data = []
-                for i in range(len(probabilities)):
-                    disease_id = i + 1
-                    disease_name = DIAGNOSIS_MAP.get(disease_id, f'Clase {disease_id}')
-                    prob = probabilities[i] * 100
-                    is_prediction = (disease_id == prediction)
+            prob_data = []
+            for i in range(len(probabilities)):
+                disease_id = i + 1
+                disease_name = DIAGNOSIS_MAP.get(disease_id, f'Clase {disease_id}')
+                prob = probabilities[i] * 100
+                is_prediction = (disease_id == prediction)
 
-                    prob_data.append({
-                        'Enfermedad': disease_name,
-                        'Probabilidad (%)': prob,
-                        'Es Predicción': '✓' if is_prediction else ''
-                    })
+                prob_data.append({
+                    'Enfermedad': disease_name,
+                    'Probabilidad (%)': prob,
+                    'Es Predicción': '✓' if is_prediction else ''
+                })
 
-                # Ordenar por probabilidad descendente
-                prob_df = pd.DataFrame(prob_data).sort_values('Probabilidad (%)', ascending=False)
+            # Ordenar por probabilidad descendente
+            prob_df = pd.DataFrame(prob_data).sort_values('Probabilidad (%)', ascending=False)
 
-                # Aplicar estilos a la tabla
-                def style_probability_table(df):
-                    def highlight_prediction(row):
-                        if row['Es Predicción'] == '✓':
-                            return ['background-color: #fee2e2; font-weight: bold'] * len(row)
-                        return [''] * len(row)
+            # Aplicar estilos a la tabla
+            def style_probability_table(df):
+                def highlight_prediction(row):
+                    if row['Es Predicción'] == '✓':
+                        return ['background-color: #fee2e2; font-weight: bold'] * len(row)
+                    return [''] * len(row)
 
-                    def color_probability(val):
-                        if isinstance(val, (int, float)):
-                            if val >= 70:
-                                color = '#dc2626'  # Rojo fuerte - alta probabilidad
-                            elif val >= 40:
-                                color = '#f97316'  # Naranja - probabilidad media
-                            else:
-                                color = '#6b7280'  # Gris - baja probabilidad
-                            return f'color: {color}; font-weight: bold'
-                        return ''
+                def color_probability(val):
+                    if isinstance(val, (int, float)):
+                        if val >= 70:
+                            color = '#dc2626'  # Rojo fuerte - alta probabilidad
+                        elif val >= 40:
+                            color = '#f97316'  # Naranja - probabilidad media
+                        else:
+                            color = '#6b7280'  # Gris - baja probabilidad
+                        return f'color: {color}; font-weight: bold'
+                    return ''
 
-                    styled = df.style.apply(highlight_prediction, axis=1)
-                    styled = styled.map(color_probability, subset=['Probabilidad (%)'])
-                    styled = styled.format({'Probabilidad (%)': '{:.2f}%'})
+                styled = df.style.apply(highlight_prediction, axis=1)
+                styled = styled.map(color_probability, subset=['Probabilidad (%)'])
+                styled = styled.format({'Probabilidad (%)': '{:.2f}%'})
 
-                    return styled
+                return styled
 
-                st.dataframe(
-                    style_probability_table(prob_df),
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                        "Enfermedad": st.column_config.TextColumn(
-                            "Enfermedad",
-                            width="medium",
-                        ),
-                        "Probabilidad (%)": st.column_config.ProgressColumn(
-                            "Probabilidad",
-                            format="%.2f%%",
-                            min_value=0,
-                            max_value=100,
-                        ),
-                        "Es Predicción": st.column_config.TextColumn(
-                            "Predicción",
-                            width="small",
-                        )
-                    }
-                )
-
-                # Botón para descargar reporte PDF individual
-                st.markdown("---")
-                st.markdown("### 📄 Descargar Reporte")
-
-                # Preparar información del paciente para el PDF
-                patient_info_dict = {
-                    'name': patient_name,
-                    'id': patient_id,
-                    'date': consultation_date.strftime('%d/%m/%Y'),
-                    'notes': patient_notes if patient_notes else ''
+            st.dataframe(
+                style_probability_table(prob_df),
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Enfermedad": st.column_config.TextColumn(
+                        "Enfermedad",
+                        width="medium",
+                    ),
+                    "Probabilidad (%)": st.column_config.ProgressColumn(
+                        "Probabilidad",
+                        format="%.2f%%",
+                        min_value=0,
+                        max_value=100,
+                    ),
+                    "Es Predicción": st.column_config.TextColumn(
+                        "Predicción",
+                        width="small",
+                    )
                 }
+            )
 
-                model_name = "Red Neuronal Artificial" if st.session_state.model_type == "neural" else "Regresión Logística"
+            # Botón para descargar reporte PDF individual
+            st.markdown("---")
+            st.markdown("### 📄 Descargar Reporte")
 
-                # Generar PDF
-                pdf_buffer = generate_individual_pdf_report(
-                    patient_info=patient_info_dict,
-                    prediction=prediction,
-                    probabilities=probabilities,
-                    model_name=model_name,
-                    feature_values=feature_values
-                )
+            # Preparar información del paciente para el PDF
+            patient_info_dict = {
+                'name': patient_name,
+                'id': patient_id,
+                'date': consultation_date.strftime('%d/%m/%Y'),
+                'notes': patient_notes if patient_notes else ''
+            }
 
-                # Botón de descarga
-                st.download_button(
-                    label="📥 Descargar Reporte Completo (PDF)",
-                    data=pdf_buffer,
-                    file_name=f"diagnostico_{patient_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                    type="primary"
-                )
+            model_name = "Red Neuronal Artificial" if st.session_state.model_type == "neural" else "Regresión Logística"
 
-                st.info("💡 **Tip:** Descargue el reporte PDF para mantener un registro completo del diagnóstico del paciente.")
+            # Generar PDF
+            pdf_buffer = generate_individual_pdf_report(
+                patient_info=patient_info_dict,
+                prediction=prediction,
+                probabilities=probabilities,
+                model_name=model_name,
+                feature_values=feature_values
+            )
 
-            except Exception as e:
-                st.error(f"Error: {e}")
+            # Botón de descarga
+            st.download_button(
+                label="📥 Descargar Reporte Completo (PDF)",
+                data=pdf_buffer,
+                file_name=f"diagnostico_{patient_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary"
+            )
+
+            st.info("💡 **Tip:** Descargue el reporte PDF para mantener un registro completo del diagnóstico del paciente.")
+
+        except Exception as e:
+            st.error(f"Error: {e}")
 
 # ==========================================
 # PÁGINA: PREDICCIÓN POR LOTES
