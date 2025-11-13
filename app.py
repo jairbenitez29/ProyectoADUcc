@@ -1114,11 +1114,70 @@ elif st.session_state.current_page == 'individual':
 
                 st.plotly_chart(plot_probabilities(probabilities, prediction), use_container_width=True)
 
-                prob_df = pd.DataFrame({
-                    'Enfermedad': [DIAGNOSIS_MAP.get(i+1, f'Clase {i+1}') for i in range(len(probabilities))],
-                    'Probabilidad': [f'{p*100:.2f}%' for p in probabilities]
-                })
-                st.dataframe(prob_df, use_container_width=True, hide_index=True)
+                # Crear tabla de probabilidades con mejor formato
+                st.markdown("### Tabla de Probabilidades Detallada")
+
+                prob_data = []
+                for i in range(len(probabilities)):
+                    disease_id = i + 1
+                    disease_name = DIAGNOSIS_MAP.get(disease_id, f'Clase {disease_id}')
+                    prob = probabilities[i] * 100
+                    is_prediction = (disease_id == prediction)
+
+                    prob_data.append({
+                        'Enfermedad': disease_name,
+                        'Probabilidad (%)': prob,
+                        'Es Predicción': '✓' if is_prediction else ''
+                    })
+
+                # Ordenar por probabilidad descendente
+                prob_df = pd.DataFrame(prob_data).sort_values('Probabilidad (%)', ascending=False)
+
+                # Aplicar estilos a la tabla
+                def style_probability_table(df):
+                    def highlight_prediction(row):
+                        if row['Es Predicción'] == '✓':
+                            return ['background-color: #fee2e2; font-weight: bold'] * len(row)
+                        return [''] * len(row)
+
+                    def color_probability(val):
+                        if isinstance(val, (int, float)):
+                            if val >= 70:
+                                color = '#dc2626'  # Rojo fuerte - alta probabilidad
+                            elif val >= 40:
+                                color = '#f97316'  # Naranja - probabilidad media
+                            else:
+                                color = '#6b7280'  # Gris - baja probabilidad
+                            return f'color: {color}; font-weight: bold'
+                        return ''
+
+                    styled = df.style.apply(highlight_prediction, axis=1)
+                    styled = styled.map(color_probability, subset=['Probabilidad (%)'])
+                    styled = styled.format({'Probabilidad (%)': '{:.2f}%'})
+
+                    return styled
+
+                st.dataframe(
+                    style_probability_table(prob_df),
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "Enfermedad": st.column_config.TextColumn(
+                            "Enfermedad",
+                            width="medium",
+                        ),
+                        "Probabilidad (%)": st.column_config.ProgressColumn(
+                            "Probabilidad",
+                            format="%.2f%%",
+                            min_value=0,
+                            max_value=100,
+                        ),
+                        "Es Predicción": st.column_config.TextColumn(
+                            "Predicción",
+                            width="small",
+                        )
+                    }
+                )
 
             except Exception as e:
                 st.error(f"Error: {e}")
