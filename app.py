@@ -1256,15 +1256,15 @@ elif st.session_state.current_page == 'individual':
             with col:
                 # Campos binarios (0 o 1)
                 if feature in BINARY_FIELDS:
-                    feature_values[feature] = st.number_input(
+                    selection = st.selectbox(
                         format_feature_name(feature),
-                        min_value=0.0,
-                        max_value=1.0,
-                        value=0.0,
-                        step=1.0,
+                        options=["No", "Sí"],
+                        index=0,
                         key=feature,
-                        help="0 = No, 1 = Sí"
+                        help="Seleccione si aplica o no"
                     )
+                    # Convertir selección a valor numérico
+                    feature_values[feature] = 1.0 if selection == "Sí" else 0.0
                 # Campos con límites específicos
                 elif feature in FIELD_LIMITS:
                     min_val, max_val, step_val, help_text, default_val = FIELD_LIMITS[feature]
