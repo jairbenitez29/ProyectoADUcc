@@ -745,6 +745,174 @@ def generate_pdf_report(df, predictions, probabilities, model_name, y_true=None)
     buffer.seek(0)
     return buffer
 
+# Función para generar reporte PDF individual
+def generate_individual_pdf_report(patient_info, prediction, probabilities, model_name, feature_values):
+    """Genera un reporte PDF para un paciente individual"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.75*inch, bottomMargin=0.75*inch)
+    story = []
+    styles = getSampleStyleSheet()
+
+    # Estilos personalizados
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#dc2626'),
+        spaceAfter=20,
+        alignment=TA_CENTER
+    )
+
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.HexColor('#1a1a1a'),
+        spaceAfter=10,
+        spaceBefore=12
+    )
+
+    # Título
+    story.append(Paragraph("Reporte de Diagnóstico Individual", title_style))
+    story.append(Paragraph("SistemaPredict - Diagnóstico de Dengue, Malaria y Leptospirosis", styles['Normal']))
+    story.append(Spacer(1, 0.3*inch))
+
+    # Información del paciente
+    story.append(Paragraph("Información del Paciente", heading_style))
+    patient_data = [
+        ['Campo', 'Valor'],
+        ['Nombre Completo', patient_info['name']],
+        ['Documento de Identidad', patient_info['id']],
+        ['Fecha de Consulta', patient_info['date']],
+        ['Edad', f"{int(feature_values.get('age', 0))} años"],
+        ['Género', 'Masculino' if feature_values.get('male', 0) == 1 else 'Femenino'],
+        ['Modelo Utilizado', model_name]
+    ]
+
+    if patient_info.get('notes'):
+        patient_data.append(['Observaciones', patient_info['notes']])
+
+    patient_table = Table(patient_data, colWidths=[2.5*inch, 4*inch])
+    patient_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dc2626')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')])
+    ]))
+    story.append(patient_table)
+    story.append(Spacer(1, 0.3*inch))
+
+    # Diagnóstico
+    story.append(Paragraph("Diagnóstico Predicho", heading_style))
+    diagnosis = DIAGNOSIS_MAP.get(prediction, "Desconocido")
+    confidence = max(probabilities) * 100
+
+    diagnosis_data = [
+        ['Enfermedad Predicha', diagnosis],
+        ['Nivel de Confianza', f'{confidence:.2f}%']
+    ]
+
+    diagnosis_table = Table(diagnosis_data, colWidths=[2.5*inch, 4*inch])
+    diagnosis_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fee2e2')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#991b1b'))
+    ]))
+    story.append(diagnosis_table)
+    story.append(Spacer(1, 0.3*inch))
+
+    # Probabilidades detalladas
+    story.append(Paragraph("Probabilidades Detalladas", heading_style))
+
+    prob_data = [['Enfermedad', 'Probabilidad', 'Predicción']]
+    for i in range(len(probabilities)):
+        disease_id = i + 1
+        disease_name = DIAGNOSIS_MAP.get(disease_id, f'Clase {disease_id}')
+        prob = probabilities[i] * 100
+        is_pred = '✓' if disease_id == prediction else ''
+        prob_data.append([disease_name, f'{prob:.2f}%', is_pred])
+
+    # Ordenar por probabilidad (mantener header en su lugar)
+    header = prob_data[0]
+    rows = sorted(prob_data[1:], key=lambda x: float(x[1].replace('%', '')), reverse=True)
+    prob_data = [header] + rows
+
+    prob_table = Table(prob_data, colWidths=[2.5*inch, 2*inch, 1.5*inch])
+    prob_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dc2626')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')])
+    ]))
+    story.append(prob_table)
+    story.append(Spacer(1, 0.4*inch))
+
+    # Gráfico de barras
+    fig, ax = plt.subplots(figsize=(6, 3.5))
+    diseases = [DIAGNOSIS_MAP.get(i+1, f'Clase {i+1}') for i in range(3)]
+    probs = [probabilities[i] * 100 for i in range(3)]
+    colors_bars = ['#dc2626' if i+1 == prediction else '#e5e5e5' for i in range(3)]
+
+    bars = ax.bar(diseases, probs, color=colors_bars)
+    ax.set_ylabel('Probabilidad (%)', fontsize=10)
+    ax.set_title('Distribución de Probabilidades', fontsize=12, fontweight='bold')
+    ax.set_ylim([0, 100])
+
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{height:.1f}%',
+               ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+    plt.xticks(rotation=15, ha='right')
+    fig.tight_layout()
+
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight')
+    plt.close()
+    img_buffer.seek(0)
+
+    img = Image(img_buffer, width=5*inch, height=3*inch)
+    story.append(img)
+    story.append(Spacer(1, 0.3*inch))
+
+    # Nota final
+    note = Paragraph(
+        "<b>Nota:</b> Este diagnóstico fue generado por un modelo de Machine Learning "
+        "y debe ser interpretado por personal de salud calificado. No reemplaza el criterio médico profesional.",
+        styles['Normal']
+    )
+    story.append(note)
+
+    story.append(Spacer(1, 0.3*inch))
+    footer = Paragraph(
+        f"Reporte generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')} por SistemaPredict",
+        ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey, alignment=TA_CENTER)
+    )
+    story.append(footer)
+
+    # Generar PDF
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
 # Inicializar session state
 if 'model_type' not in st.session_state:
     st.session_state.model_type = 'neural'
@@ -1044,7 +1212,41 @@ elif st.session_state.current_page == 'individual':
 
     # Formulario
     with st.form("prediction_form"):
-        st.markdown('<div class="card"><div class="card-header"><i class="fas fa-user-injured card-icon"></i><span class="card-title">Datos del Paciente</span></div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="card"><div class="card-header"><i class="fas fa-user-injured card-icon"></i><span class="card-title">Información del Paciente</span></div></div>', unsafe_allow_html=True)
+
+        # Campos de identificación del paciente
+        st.markdown("#### Datos de Identificación")
+        id_col1, id_col2, id_col3 = st.columns(3)
+
+        with id_col1:
+            patient_name = st.text_input(
+                "Nombre Completo del Paciente *",
+                placeholder="Ej: Juan Pérez García",
+                help="Nombre completo del paciente para identificación"
+            )
+
+        with id_col2:
+            patient_id = st.text_input(
+                "Documento de Identidad *",
+                placeholder="Ej: 1234567890",
+                help="Número de documento de identidad (CC, TI, etc.)"
+            )
+
+        with id_col3:
+            consultation_date = st.date_input(
+                "Fecha de Consulta *",
+                value=datetime.now().date(),
+                help="Fecha de la consulta médica"
+            )
+
+        patient_notes = st.text_area(
+            "Observaciones Clínicas (Opcional)",
+            placeholder="Síntomas adicionales, antecedentes relevantes, etc.",
+            help="Información adicional que pueda ser relevante para el diagnóstico"
+        )
+
+        st.markdown("---")
+        st.markdown("#### Datos Clínicos y de Laboratorio")
 
         cols = st.columns(3)
         feature_values = {}
@@ -1091,6 +1293,11 @@ elif st.session_state.current_page == 'individual':
 
         if submitted:
             try:
+                # Validar campos obligatorios
+                if not patient_name or not patient_id:
+                    st.error("⚠️ Por favor complete los campos obligatorios: Nombre del Paciente y Documento de Identidad")
+                    st.stop()
+
                 X = np.array([[feature_values[feat] for feat in feature_names]])
                 X_scaled = models['scaler'].transform(X)
                 model = models[st.session_state.model_type]
@@ -1100,6 +1307,35 @@ elif st.session_state.current_page == 'individual':
                 confidence = max(probabilities)
 
                 st.markdown("---")
+                st.markdown("## 📋 Resultados del Diagnóstico")
+
+                # Mostrar información del paciente
+                st.markdown("### Información del Paciente")
+                patient_info_col1, patient_info_col2, patient_info_col3 = st.columns(3)
+
+                with patient_info_col1:
+                    st.markdown(f"""
+                    **Nombre:** {patient_name}
+                    **Documento:** {patient_id}
+                    """)
+
+                with patient_info_col2:
+                    st.markdown(f"""
+                    **Fecha de Consulta:** {consultation_date.strftime('%d/%m/%Y')}
+                    **Modelo Usado:** {'Red Neuronal' if st.session_state.model_type == 'neural' else 'Regresión Logística'}
+                    """)
+
+                with patient_info_col3:
+                    st.markdown(f"""
+                    **Edad:** {int(feature_values.get('age', 0))} años
+                    **Género:** {'Masculino' if feature_values.get('male', 0) == 1 else 'Femenino'}
+                    """)
+
+                if patient_notes:
+                    st.markdown(f"**Observaciones:** {patient_notes}")
+
+                st.markdown("---")
+                st.markdown("### Diagnóstico Predicho")
 
                 diagnosis = DIAGNOSIS_MAP.get(prediction, "Desconocido")
                 st.markdown(f'<div class="success-box">{diagnosis}</div>', unsafe_allow_html=True)
@@ -1178,6 +1414,41 @@ elif st.session_state.current_page == 'individual':
                         )
                     }
                 )
+
+                # Botón para descargar reporte PDF individual
+                st.markdown("---")
+                st.markdown("### 📄 Descargar Reporte")
+
+                # Preparar información del paciente para el PDF
+                patient_info_dict = {
+                    'name': patient_name,
+                    'id': patient_id,
+                    'date': consultation_date.strftime('%d/%m/%Y'),
+                    'notes': patient_notes if patient_notes else ''
+                }
+
+                model_name = "Red Neuronal Artificial" if st.session_state.model_type == "neural" else "Regresión Logística"
+
+                # Generar PDF
+                pdf_buffer = generate_individual_pdf_report(
+                    patient_info=patient_info_dict,
+                    prediction=prediction,
+                    probabilities=probabilities,
+                    model_name=model_name,
+                    feature_values=feature_values
+                )
+
+                # Botón de descarga
+                st.download_button(
+                    label="📥 Descargar Reporte Completo (PDF)",
+                    data=pdf_buffer,
+                    file_name=f"diagnostico_{patient_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    type="primary"
+                )
+
+                st.info("💡 **Tip:** Descargue el reporte PDF para mantener un registro completo del diagnóstico del paciente.")
 
             except Exception as e:
                 st.error(f"Error: {e}")
