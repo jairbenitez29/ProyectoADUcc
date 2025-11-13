@@ -1004,30 +1004,31 @@ elif st.session_state.current_page == 'individual':
     """, unsafe_allow_html=True)
 
     # Definir límites razonables basados en rangos clínicos
+    # Formato: (min, max, step, help_text, default_value)
     FIELD_LIMITS = {
-        'age': (0.0, 100.0, 1.0, "Edad máxima: 100 años"),
-        'hospitalization_days': (0.0, 365.0, 1.0, "Días de hospitalización"),
-        'body_temperature': (30.0, 45.0, 0.1, "Temperatura corporal en °C"),
-        'hematocrit': (0.0, 60.0, 0.1, "Porcentaje (%)"),
-        'hemoglobin': (0.0, 25.0, 0.1, "g/dL"),
-        'red_blood_cells': (0.0, 10000000.0, 1000.0, "Células/μL"),
-        'white_blood_cells': (0.0, 50000.0, 100.0, "Células/μL"),
-        'neutrophils': (0.0, 100.0, 0.1, "Porcentaje (%)"),
-        'eosinophils': (0.0, 100.0, 0.1, "Porcentaje (%)"),
-        'basophils': (0.0, 10.0, 0.01, "Porcentaje (%)"),
-        'monocytes': (0.0, 100.0, 0.1, "Porcentaje (%)"),
-        'lymphocytes': (0.0, 100.0, 0.1, "Porcentaje (%)"),
-        'platelets': (0.0, 1000000.0, 1000.0, "Células/μL"),
-        'AST (SGOT)': (0.0, 1000.0, 1.0, "U/L"),
-        'ALT (SGPT)': (0.0, 1500.0, 1.0, "U/L"),
-        'ALP (alkaline_phosphatase)': (0.0, 500.0, 1.0, "U/L"),
-        'total_bilirubin': (0.0, 20.0, 0.01, "mg/dL"),
-        'direct_bilirubin': (0.0, 15.0, 0.01, "mg/dL"),
-        'indirect_bilirubin': (0.0, 10.0, 0.01, "mg/dL"),
-        'total_proteins': (0.0, 12.0, 0.1, "g/dL"),
-        'albumin': (0.0, 6.0, 0.01, "g/dL"),
-        'creatinine': (0.0, 15.0, 0.01, "mg/dL"),
-        'urea': (0.0, 300.0, 0.1, "mg/dL")
+        'age': (0.0, 100.0, 1.0, "Edad máxima: 100 años", 0.0),
+        'hospitalization_days': (0.0, 365.0, 1.0, "Días de hospitalización", 0.0),
+        'body_temperature': (30.0, 45.0, 0.1, "Temperatura corporal en °C", 36.5),
+        'hematocrit': (0.0, 60.0, 0.1, "Porcentaje (%)", 0.0),
+        'hemoglobin': (0.0, 25.0, 0.1, "g/dL", 0.0),
+        'red_blood_cells': (0.0, 10000000.0, 1000.0, "Células/μL", 0.0),
+        'white_blood_cells': (0.0, 50000.0, 100.0, "Células/μL", 0.0),
+        'neutrophils': (0.0, 100.0, 0.1, "Porcentaje (%)", 0.0),
+        'eosinophils': (0.0, 100.0, 0.1, "Porcentaje (%)", 0.0),
+        'basophils': (0.0, 10.0, 0.01, "Porcentaje (%)", 0.0),
+        'monocytes': (0.0, 100.0, 0.1, "Porcentaje (%)", 0.0),
+        'lymphocytes': (0.0, 100.0, 0.1, "Porcentaje (%)", 0.0),
+        'platelets': (0.0, 1000000.0, 1000.0, "Células/μL", 0.0),
+        'AST (SGOT)': (0.0, 1000.0, 1.0, "U/L", 0.0),
+        'ALT (SGPT)': (0.0, 1500.0, 1.0, "U/L", 0.0),
+        'ALP (alkaline_phosphatase)': (0.0, 500.0, 1.0, "U/L", 0.0),
+        'total_bilirubin': (0.0, 20.0, 0.01, "mg/dL", 0.0),
+        'direct_bilirubin': (0.0, 15.0, 0.01, "mg/dL", 0.0),
+        'indirect_bilirubin': (0.0, 10.0, 0.01, "mg/dL", 0.0),
+        'total_proteins': (0.0, 12.0, 0.1, "g/dL", 0.0),
+        'albumin': (0.0, 6.0, 0.01, "g/dL", 0.0),
+        'creatinine': (0.0, 15.0, 0.01, "mg/dL", 0.0),
+        'urea': (0.0, 300.0, 0.1, "mg/dL", 0.0)
     }
 
     # Lista de campos binarios
@@ -1064,12 +1065,12 @@ elif st.session_state.current_page == 'individual':
                     )
                 # Campos con límites específicos
                 elif feature in FIELD_LIMITS:
-                    min_val, max_val, step_val, help_text = FIELD_LIMITS[feature]
+                    min_val, max_val, step_val, help_text, default_val = FIELD_LIMITS[feature]
                     feature_values[feature] = st.number_input(
                         format_feature_name(feature),
                         min_value=min_val,
                         max_value=max_val,
-                        value=0.0,
+                        value=default_val,
                         step=step_val,
                         key=feature,
                         help=help_text
